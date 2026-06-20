@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SophroCR — Vanessa Slous</title>
+<style>
+  :root {
+    --teal: #2E7D8A;
+    --plum: #5B3A6E;
+    --light-teal: #E8F4F6;
+    --dark: #1A1A1A;
+    --gray: #666666;
+    --border: #CCCCCC;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Calibri, "Segoe UI", Arial, sans-serif;
+    background: #FAFAFA;
+    color: var(--dark);
+    margin: 0;
+    padding: 0 16px 60px;
+  }
+  header {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 0 12px;
+  }
+  h1 {
+    font-family: Georgia, serif;
+    color: var(--teal);
+    font-size: 24px;
+    margin: 0 0 4px;
+  }
+  header p { color: var(--gray); margin: 0; font-size: 14px; }
+
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  h2 {
+    font-family: Georgia, serif;
+    color: var(--teal);
+    font-size: 16px;
+    border-bottom: 2px solid var(--teal);
+    padding-bottom: 6px;
+    margin-top: 0;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+  input[type=text], textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  textarea { resize: vertical; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 180px; }
+
+  button {
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  button.secondary {
+    background: white;
+    color: var(--teal);
+    border: 1px solid var(--teal);
+  }
+
+  #status {
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 18px;
+  }
+  #status.error { color: #B00020; }
+  #status.ok { color: var(--teal); }
+
+  #crPreview {
+    white-space: pre-wrap;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    background: var(--light-teal);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    min-height: 200px;
+  }
+  #previewSection { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Générateur de compte-rendu de séance</h1>
+  <p>Sophrologie caycédienne · Vanessa Slous · sophroslous.fr</p>
+</header>
+
+<main>
+
+  <section>
+    <h2>1. Métadonnées de la séance</h2>
+    <div class="row">
+      <div>
+        <label for="client">Prénom du client *</label>
+        <input type="text" id="client" placeholder="ex. Yannick">
+      </div>
+      <div>
+        <label for="date">Date *</label>
+        <input type="text" id="date" placeholder="ex. 17 juin 2026">
+      </div>
+      <div>
+        <label for="seance">Séance n° *</label>
+        <input type="text" id="seance" placeholder="ex. 2">
+      </div>
+    </div>
+    <label for="motif">Motif de suivi *</label>
+    <input type="text" id="motif" placeholder="ex. Gestion de la charge mentale">
+    <div class="row">
+      <div>
+        <label for="techniques">Technique(s) *</label>
+        <input type="text" id="techniques" placeholder="ex. SBVc + SDNc + SAVa">
+      </div>
+      <div>
+        <label for="phase">Phase du protocole (optionnel)</label>
+        <input type="text" id="phase" placeholder="ex. Installation des 3TC">
+      </div>
+    </div>
+    <label for="notes">Notes personnelles (optionnel)</label>
+    <textarea id="notes" rows="2" placeholder="Observations, verbatim importants..."></textarea>
+  </section>
+
+  <section>
+    <h2>2. Transcription de la séance</h2>
+    <p style="font-size:13px; color:var(--gray); margin-top:0;">
+      Collez ici la transcription (Dictaphone iOS, Turboscribe, ou autre).
+      Si possible, indiquez qui parle (ex. "Sophrologue : ..." / "Client : ...").
+    </p>
+    <textarea id="transcription" rows="14" placeholder="Collez la transcription complète ici..."></textarea>
+  </section>
+
+  <button id="generateBtn">Générer le compte-rendu</button>
+  <div id="status"></div>
+
+  <section id="previewSection">
+    <h2>3. Compte-rendu généré (relecture)</h2>
+    <p style="font-size:13px; color:var(--gray); margin-top:0;">
+      Vous pouvez corriger le texte directement ci-dessous avant de télécharger le Word.
+    </p>
+    <textarea id="crPreview" rows="20"></textarea>
+    <button id="downloadBtn">Télécharger le Word</button>
+    <button id="regenerateBtn" class="secondary">Régénérer</button>
+  </section>
+
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function getMeta() {
+  return {
+    client: $('client').value.trim(),
+    date: $('date').value.trim(),
+    seance: $('seance').value.trim(),
+    motif: $('motif').value.trim(),
+    techniques: $('techniques').value.trim(),
+    phase: $('phase').value.trim(),
+    notes: $('notes').value.trim(),
+  };
+}
+
+function setStatus(msg, type) {
+  const el = $('status');
+  el.textContent = msg;
+  el.className = type || '';
+}
+
+async function generate() {
+  const meta = getMeta();
+  const transcription = $('transcription').value.trim();
+
+  if (!meta.client || !meta.date || !meta.seance || !meta.motif || !meta.techniques) {
+    setStatus('Merci de remplir tous les champs obligatoires (*).', 'error');
+    return;
+  }
+  if (!transcription) {
+    setStatus('La transcription est vide. Collez le texte de la séance.', 'error');
+    return;
+  }
+
+  $('generateBtn').disabled = true;
+  setStatus('Génération en cours… (quelques secondes)', '');
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...meta, transcription })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setStatus(data.error || 'Une erreur est survenue.', 'error');
+      $('generateBtn').disabled = false;
+      return;
+    }
+
+    $('crPreview').value = data.cr;
+    $('previewSection').style.display = 'block';
+    setStatus('Compte-rendu généré. Relisez-le avant de télécharger.', 'ok');
+    $('previewSection').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    setStatus('Connexion perdue. Vérifiez votre connexion et réessayez.', 'error');
+  } finally {
+    $('generateBtn').disabled = false;
+  }
+}
+
+async function download() {
+  const meta = getMeta();
+  const cr = $('crPreview').value;
+
+  if (!cr.trim()) {
+    setStatus('Aucun texte à mettre en forme.', 'error');
+    return;
+  }
+
+  setStatus('Préparation du fichier Word…', '');
+
+  try {
+    const res = await fetch('/api/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...meta, cr })
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setStatus(data.error || 'Le téléchargement a échoué.', 'error');
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CR_${meta.client || 'client'}_S${meta.seance || ''}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus('Fichier Word téléchargé.', 'ok');
+
+  } catch (err) {
+    setStatus('Connexion perdue. Vérifiez votre connexion et réessayez.', 'error');
+  }
+}
+
+$('generateBtn').addEventListener('click', generate);
+$('regenerateBtn').addEventListener('click', generate);
+$('downloadBtn').addEventListener('click', download);
+</script>
+
+</body>
+</html>

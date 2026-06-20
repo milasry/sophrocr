@@ -1,0 +1,413 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2870
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww23580\viewh15260\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs26 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 /**\
+ * ============================================================\
+ *  G\'c9N\'c9RATEUR DE COMPTE-RENDU \'97 SOPHROLOGIE CAYC\'c9DIENNE\
+ *  Vanessa Slous \'b7 sophroslous.fr\
+ * ============================================================\
+ *\
+ *  Ce fichier g\'e9n\'e8re le fichier Word (.docx) du compte-rendu\
+ *  de s\'e9ance \'e0 partir du texte produit par l'API Claude.\
+ *\
+ *  D\'c9PENDANCE : npm install docx\
+ *\
+ *  INT\'c9GRATION DANS L'APPLICATION :\
+ *  Appelez la fonction export\'e9e generateCR(data) avec :\
+ *    data.client     \uc0\u8594  pr\'e9nom du client (string)\
+ *    data.date       \uc0\u8594  date de la s\'e9ance (string, ex. "17 juin 2026")\
+ *    data.seance     \uc0\u8594  num\'e9ro de s\'e9ance (string)\
+ *    data.motif      \uc0\u8594  motif de suivi (string)\
+ *    data.techniques \uc0\u8594  techniques pratiqu\'e9es (string)\
+ *    data.phase      \uc0\u8594  phase du protocole (string, peut \'eatre vide)\
+ *    data.cr         \uc0\u8594  texte du CR g\'e9n\'e9r\'e9 par Claude (string)\
+ *\
+ *  La fonction retourne un Buffer que vous pouvez envoyer\
+ *  en t\'e9l\'e9chargement HTTP avec les headers appropri\'e9s :\
+ *    Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\
+ *    Content-Disposition: attachment; filename="CR_[client]_S[seance].docx"\
+ * ============================================================\
+ */\
+\
+const \{\
+  Document, Packer, Paragraph, TextRun,\
+  Table, TableRow, TableCell,\
+  AlignmentType, BorderStyle, WidthType, ShadingType,\
+  LevelFormat, Footer, PageNumber\
+\} = require('docx');\
+\
+// \uc0\u9472 \u9472  CHARTE GRAPHIQUE \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+// NE PAS MODIFIER sans accord de Vanessa Slous\
+const COLORS = \{\
+  teal:       "2E7D8A",   // Titres de sections, filets\
+  plum:       "5B3A6E",   // Titres H2, regroupements th\'e9matiques\
+  lightTeal:  "E8F4F6",   // Fond r\'e9sum\'e9 ex\'e9cutif\
+  lightPlum:  "F0EBF5",   // Fond note clinique\
+  dark:       "1A1A1A",   // Corps de texte\
+  gray:       "666666",   // Texte secondaire, pied de page\
+  border:     "CCCCCC",   // Filets de tableaux\
+\};\
+\
+// Largeur de contenu en DXA (A4, marges 21mm)\
+const CONTENT_W = 9506;\
+\
+// \uc0\u9472 \u9472  BORDURES \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+const borderThin = \{ style: BorderStyle.SINGLE, size: 1, color: COLORS.border \};\
+const allBorders = \{ top: borderThin, bottom: borderThin, left: borderThin, right: borderThin \};\
+const noBorder   = \{ style: BorderStyle.NONE, size: 0, color: "FFFFFF" \};\
+const noBorders  = \{ top: noBorder, bottom: noBorder, left: noBorder, right: noBorder \};\
+\
+// \uc0\u9472 \u9472  HELPERS \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+\
+/** Paragraphe vide pour espacement */\
+function sp(before = 80) \{\
+  return new Paragraph(\{ children: [new TextRun("")], spacing: \{ before, after: 0 \} \});\
+\}\
+\
+/** Titre de section H1 \'97 Georgia gras teal avec filet bas */\
+function h1(text) \{\
+  return new Paragraph(\{\
+    children: [new TextRun(\{ text, bold: true, size: 26, color: COLORS.teal, font: "Georgia" \})],\
+    spacing: \{ before: 280, after: 80 \},\
+    border: \{ bottom: \{ style: BorderStyle.SINGLE, size: 4, color: COLORS.teal, space: 1 \} \}\
+  \});\
+\}\
+\
+/** Corps de texte standard */\
+function body(text, opts = \{\}) \{\
+  return new Paragraph(\{\
+    children: [new TextRun(\{ text, size: 20, font: "Calibri", color: COLORS.dark, ...opts \})],\
+    spacing: \{ before: 40, after: 40 \}\
+  \});\
+\}\
+\
+/** Corps de texte italique (regroupements th\'e9matiques) */\
+function italic(text, color = COLORS.plum) \{\
+  return new Paragraph(\{\
+    children: [new TextRun(\{ text, size: 20, font: "Calibri", italics: true, bold: true, color \})],\
+    spacing: \{ before: 60, after: 20 \}\
+  \});\
+\}\
+\
+/** Bullet point */\
+function bullet(text) \{\
+  return new Paragraph(\{\
+    numbering: \{ reference: "bullets", level: 0 \},\
+    children: [new TextRun(\{ text, size: 20, font: "Calibri", color: COLORS.dark \})],\
+    spacing: \{ before: 30, after: 30 \}\
+  \});\
+\}\
+\
+/**\
+ * Bloc encadr\'e9 avec fond color\'e9\
+ * Utilis\'e9 pour : r\'e9sum\'e9 ex\'e9cutif, note clinique, orientations\
+ */\
+function box(paragraphs, bg = COLORS.lightTeal) \{\
+  return new Table(\{\
+    width: \{ size: CONTENT_W, type: WidthType.DXA \},\
+    columnWidths: [CONTENT_W],\
+    rows: [new TableRow(\{\
+      children: [new TableCell(\{\
+        borders: allBorders,\
+        width: \{ size: CONTENT_W, type: WidthType.DXA \},\
+        shading: \{ fill: bg, type: ShadingType.CLEAR \},\
+        margins: \{ top: 120, bottom: 120, left: 160, right: 160 \},\
+        children: paragraphs\
+      \})]\
+    \})]\
+  \});\
+\}\
+\
+// \uc0\u9472 \u9472  PARSEUR DU TEXTE CLAUDE \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+/**\
+ * Le texte retourn\'e9 par Claude suit la structure en 4 sections\
+ * d\'e9finie dans le prompt syst\'e8me. Ce parseur d\'e9coupe le texte\
+ * brut en sections exploitables pour la mise en forme.\
+ *\
+ * Structure attendue du texte Claude :\
+ *   R\'c9SUM\'c9 EX\'c9CUTIF\
+ *   [texte]\
+ *\
+ *   1. \'c9CHANGES PR\'c9-SOPHRONIQUES\
+ *   [texte avec regroupements th\'e9matiques en italique]\
+ *   Note clinique \'97 [texte]\
+ *\
+ *   2. TECHNIQUE PRATIQU\'c9E\
+ *   [texte]\
+ *\
+ *   3. PH\'c9NODESCRIPTION\
+ *   [texte]\
+ *\
+ *   4. ORIENTATIONS\
+ *   \'96 [item]\
+ *   \'96 [item]\
+ *\
+ * NOTE POUR LE D\'c9VELOPPEUR :\
+ * Si Claude retourne un format l\'e9g\'e8rement diff\'e9rent, ajustez\
+ * les expressions r\'e9guli\'e8res ci-dessous. Privil\'e9giez une\
+ * s\'e9paration par titres de section plut\'f4t que par num\'e9ros.\
+ */\
+function parseCR(text) \{\
+  const sections = \{\
+    resume: "",\
+    presSophro: "",\
+    noteClinic: "",\
+    technique: "",\
+    pheno: "",\
+    orientations: []\
+  \};\
+\
+  // D\'e9coupe par grands blocs\
+  const resumeMatch    = text.match(/R\'c9SUM\'c9 EX\'c9CUTIF[\\s\\S]*?(?=1\\.|\'c9CHANGES)/i);\
+  const preSophroMatch = text.match(/(?:1\\.|\'c9CHANGES PR\'c9-SOPHRONIQUES)[\\s\\S]*?(?=2\\.|TECHNIQUE)/i);\
+  const techniqueMatch = text.match(/(?:2\\.|TECHNIQUE PRATIQU\'c9E)[\\s\\S]*?(?=3\\.|PH\'c9NO)/i);\
+  const phenoMatch     = text.match(/(?:3\\.|PH\'c9NODESCRIPTION)[\\s\\S]*?(?=4\\.|ORIENTATIONS)/i);\
+  const orientMatch    = text.match(/(?:4\\.|ORIENTATIONS)[\\s\\S]*$/i);\
+\
+  if (resumeMatch)    sections.resume     = resumeMatch[0].replace(/R\'c9SUM\'c9 EX\'c9CUTIF/i, "").trim();\
+  if (techniqueMatch) sections.technique  = techniqueMatch[0].replace(/2\\.|TECHNIQUE PRATIQU\'c9E/i, "").trim();\
+  if (phenoMatch)     sections.pheno      = phenoMatch[0].replace(/3\\.|PH\'c9NODESCRIPTION/i, "").trim();\
+\
+  // Pr\'e9-sophronique : s\'e9parer note clinique\
+  if (preSophroMatch) \{\
+    const raw = preSophroMatch[0].replace(/1\\.|\'c9CHANGES PR\'c9-SOPHRONIQUES/i, "").trim();\
+    const noteMatch = raw.match(/Note clinique[\\s\\S]*$/i);\
+    if (noteMatch) \{\
+      sections.noteClinic = noteMatch[0].trim();\
+      sections.presSophro = raw.replace(noteMatch[0], "").trim();\
+    \} else \{\
+      sections.presSophro = raw;\
+    \}\
+  \}\
+\
+  // Orientations : extraire les bullets\
+  if (orientMatch) \{\
+    const raw = orientMatch[0].replace(/4\\.|ORIENTATIONS/i, "").trim();\
+    sections.orientations = raw\
+      .split("\\n")\
+      .map(l => l.replace(/^[\'96\\-\'95]\\s*/, "").trim())\
+      .filter(l => l.length > 0);\
+  \}\
+\
+  return sections;\
+\}\
+\
+// \uc0\u9472 \u9472  FORMATEUR DU PR\'c9-SOPHRONIQUE \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+/**\
+ * D\'e9tecte les regroupements th\'e9matiques (mots en italique gras\
+ * suivis d'un tiret) et les formate diff\'e9remment du corps.\
+ * Ex. : "Prise de conscience \'97 texte..." \uc0\u8594  italic + body\
+ */\
+function formatPreSophro(text) \{\
+  const paragraphs = [];\
+  const lines = text.split("\\n").filter(l => l.trim());\
+\
+  for (const line of lines) \{\
+    // Regroupement th\'e9matique : "Mot(s) \'97 suite du texte"\
+    const themeMatch = line.match(/^([A-Z\'c0-\'9fa-z\'e0-\'ff\\s'']+)\\s*[\'97\'96-]\\s*(.+)/);\
+    if (themeMatch && themeMatch[1].length < 40) \{\
+      paragraphs.push(new Paragraph(\{\
+        children: [\
+          new TextRun(\{ text: themeMatch[1].trim(), size: 20, font: "Calibri", italics: true, bold: true, color: COLORS.plum \}),\
+          new TextRun(\{ text: " \'97 " + themeMatch[2].trim(), size: 20, font: "Calibri", color: COLORS.dark \})\
+        ],\
+        spacing: \{ before: 50, after: 30 \}\
+      \}));\
+    \} else \{\
+      paragraphs.push(body(line));\
+    \}\
+  \}\
+  return paragraphs;\
+\}\
+\
+// \uc0\u9472 \u9472  FONCTION PRINCIPALE \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+/**\
+ * G\'e9n\'e8re le fichier Word et retourne un Buffer.\
+ * @param \{Object\} data - Donn\'e9es de la s\'e9ance + texte CR\
+ * @returns \{Promise<Buffer>\}\
+ */\
+async function generateCR(data) \{\
+  const \{ client, date, seance, motif, techniques, phase, cr \} = data;\
+  const sections = parseCR(cr);\
+\
+  // En-t\'eate informatif\
+  const entete = [\
+    `Client : $\{client\}`,\
+    `Date : $\{date\}`,\
+    `S\'e9ance n\'b0 $\{seance\}`,\
+    `Motif : $\{motif\}`,\
+    `Technique(s) : $\{techniques\}`,\
+    phase ? `Phase : $\{phase\}` : null\
+  ].filter(Boolean).join("   |   ");\
+\
+  const doc = new Document(\{\
+    numbering: \{\
+      config: [\{\
+        reference: "bullets",\
+        levels: [\{\
+          level: 0,\
+          format: LevelFormat.BULLET,\
+          text: "\'96",\
+          alignment: AlignmentType.LEFT,\
+          style: \{ paragraph: \{ indent: \{ left: 480, hanging: 240 \} \} \}\
+        \}]\
+      \}]\
+    \},\
+    styles: \{\
+      default: \{ document: \{ run: \{ font: "Calibri", size: 20 \} \} \}\
+    \},\
+    sections: [\{\
+      properties: \{\
+        page: \{\
+          // Format A4\
+          size: \{ width: 11906, height: 16838 \},\
+          // Marges 21mm\
+          margin: \{ top: 1190, right: 1190, bottom: 1190, left: 1190 \}\
+        \}\
+      \},\
+      footers: \{\
+        default: new Footer(\{\
+          children: [new Paragraph(\{\
+            children: [\
+              new TextRun(\{ text: `Vanessa Slous \'b7 sophroslous.fr     \'97     `, size: 16, font: "Calibri", color: COLORS.gray \}),\
+              new TextRun(\{ children: [PageNumber.CURRENT], size: 16, font: "Calibri", color: COLORS.gray \})\
+            ],\
+            alignment: AlignmentType.CENTER,\
+            border: \{ top: \{ style: BorderStyle.SINGLE, size: 2, color: COLORS.border, space: 1 \} \},\
+            spacing: \{ before: 80 \}\
+          \})]\
+        \})\
+      \},\
+      children: [\
+\
+        // \uc0\u9472 \u9472  TITRE \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        new Paragraph(\{\
+          children: [new TextRun(\{ text: "COMPTE-RENDU DE S\'c9ANCE", bold: true, size: 30, color: COLORS.teal, font: "Georgia" \})],\
+          spacing: \{ before: 0, after: 60 \}\
+        \}),\
+        new Paragraph(\{\
+          children: [new TextRun(\{ text: entete, size: 18, font: "Calibri", color: COLORS.gray \})],\
+          spacing: \{ before: 0, after: 0 \},\
+          border: \{ bottom: \{ style: BorderStyle.SINGLE, size: 6, color: COLORS.teal, space: 1 \} \}\
+        \}),\
+        sp(120),\
+\
+        // \uc0\u9472 \u9472  R\'c9SUM\'c9 EX\'c9CUTIF \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        box(\
+          [\
+            new Paragraph(\{\
+              children: [new TextRun(\{ text: "R\'c9SUM\'c9 EX\'c9CUTIF", bold: true, size: 20, font: "Calibri", color: COLORS.teal \})],\
+              spacing: \{ before: 0, after: 60 \}\
+            \}),\
+            ...sections.resume.split("\\n").filter(l => l.trim()).map(l => body(l.trim()))\
+          ],\
+          COLORS.lightTeal\
+        ),\
+        sp(),\
+\
+        // \uc0\u9472 \u9472  1. \'c9CHANGES PR\'c9-SOPHRONIQUES \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        h1("1. \'c9CHANGES PR\'c9-SOPHRONIQUES"),\
+        sp(60),\
+        ...formatPreSophro(sections.presSophro),\
+\
+        // Note clinique\
+        sections.noteClinic ? sp(60) : sp(0),\
+        sections.noteClinic ? box(\
+          [\
+            new Paragraph(\{\
+              children: [new TextRun(\{ text: "Note clinique", bold: true, italics: true, size: 20, font: "Calibri", color: COLORS.plum \})],\
+              spacing: \{ before: 0, after: 40 \}\
+            \}),\
+            ...sections.noteClinic\
+              .replace(/Note clinique\\s*[\'97\'96-]?\\s*/i, "")\
+              .split("\\n").filter(l => l.trim()).map(l => body(l.trim()))\
+          ],\
+          COLORS.lightPlum\
+        ) : sp(0),\
+        sp(),\
+\
+        // \uc0\u9472 \u9472  2. TECHNIQUE PRATIQU\'c9E \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        h1("2. TECHNIQUE PRATIQU\'c9E"),\
+        sp(60),\
+        ...sections.technique.split("\\n").filter(l => l.trim()).map(l => body(l.trim())),\
+        sp(),\
+\
+        // \uc0\u9472 \u9472  3. PH\'c9NODESCRIPTION \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        h1("3. PH\'c9NODESCRIPTION"),\
+        sp(60),\
+        ...sections.pheno.split("\\n").filter(l => l.trim()).map(l => body(l.trim())),\
+        sp(),\
+\
+        // \uc0\u9472 \u9472  4. ORIENTATIONS \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+        h1("4. ORIENTATIONS"),\
+        sp(60),\
+        ...sections.orientations.map(o => bullet(o)),\
+        sp()\
+\
+      ]\
+    \}]\
+  \});\
+\
+  return await Packer.toBuffer(doc);\
+\}\
+\
+// \uc0\u9472 \u9472  EXEMPLE D'UTILISATION (test local) \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+// Pour tester sans serveur, d\'e9commentez ce bloc et lancez :\
+// node generate_cr.js\
+\
+/*\
+const fs = require('fs');\
+const testData = \{\
+  client:     "Yannick",\
+  date:       "17 juin 2026",\
+  seance:     "2",\
+  motif:      "Gestion de la charge mentale",\
+  techniques: "SBVc + SDNc + SAVa",\
+  phase:      "Conqu\'eate de sa corporalit\'e9 \'97 Installation des 3TC",\
+  cr: `R\'c9SUM\'c9 EX\'c9CUTIF\
+D\'e9m\'e9nagement imminent (quitte le domicile parental). Aspirations de r\'e9ussite sociale, professionnelle et financi\'e8re assum\'e9es progressivement. Peur centrale de "passer \'e0 c\'f4t\'e9 de sa propre vie". Envie de "retrouver Yannick et souffler". Bonne r\'e9ceptivit\'e9 corporelle \'97 vivance visuelle spontan\'e9e (eau turquoise) pendant la vitalisation des organes.\
+\
+1. \'c9CHANGES PR\'c9-SOPHRONIQUES\
+Deux entra\'eenements r\'e9alis\'e9s \'e0 domicile : une fois avec appuis manuels, une fois sans. Pas d'audio \'97 ne se sentait pas pr\'eat. Ressenti similaire dans les deux cas, positif.\
+\
+Prise de conscience \'97 D\'e8s le soir de la S1 : "Je veux pertinemment \'eatre fier de moi." Identifie la fiert\'e9 de soi comme source centrale de sa charge mentale.\
+\
+Champ lexical du devoir \'97 "Je me dois", "je devrais", "je devais" omnipr\'e9sents. Capacit\'e9s langagi\'e8res pr\'e9coces non exploit\'e9es "comme il aurait d\'fb".\
+\
+Aspirations \'97 R\'e9ussite sociale, professionnelle, financi\'e8re. Voyages, paysages maritimes, exp\'e9riences "belles."\
+\
+Rapport \'e0 lui-m\'eame \'97 "Je vis pour le petit gar\'e7on plein de r\'eaves." Veut "retrouver Yannick et souffler."\
+\
+Note clinique \'97 Intellectualise en permanence. Vigilance sur la dur\'e9e des \'e9changes pr\'e9-sophroniques. "Qui est Yannick ?" reste la question centrale.\
+\
+2. TECHNIQUE PRATIQU\'c9E\
+SBVc : 4' \'97 resserr\'e9e, facilite l'entr\'e9e dans la s\'e9ance, limite les pens\'e9es parasites.\
+SDNc : 5' \'97 1 cycle contraction/rel\'e2chement par syst\'e8me au lieu de 3.\
+SAVa : 8'. Total : ~18'.\
+\
+3. PH\'c9NODESCRIPTION\
+Vivance visuelle spontan\'e9e pendant la vitalisation des organes : eau turquoise, image aquatique. Rel\'e2chement sur zones de tension habituelles (dos, t\'eate). Appr\'e9ciation marqu\'e9e de la posture en flexion avant \'97 verbalise la diff\'e9rence tension/distension. Quelques pens\'e9es parasites. Impact mental et physique en fin de s\'e9ance.\
+"J'ai d\'e9cid\'e9 de m'octroyer un cr\'e9neau pour la t\'eate et en fait \'e7a sera pour le corps \'97 c'est dingue." Premier acc\'e8s conscient \'e0 la dimension corporelle.\
+\
+4. ORIENTATIONS\
+\'96 Horaire : d\'e9caler en fin d'apr\'e8s-midi\
+\'96 SBVc : maintenir resserr\'e9e\
+\'96 SDNc : revenir \'e0 3 cycles par syst\'e8me\
+\'96 RD1 : insister sur vivance des organes\
+\'96 Anamn\'e8se S3 : "Qui est Yannick ?" \'97 laisser \'e9merger sans forcer`\
+\};\
+\
+generateCR(testData).then(buffer => \{\
+  fs.writeFileSync('test_CR_Yannick.docx', buffer);\
+  console.log('CR g\'e9n\'e9r\'e9 : test_CR_Yannick.docx');\
+\});\
+*/\
+\
+module.exports = \{ generateCR \};\
+}
