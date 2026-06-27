@@ -84,7 +84,7 @@ button:hover{background:#235f69}
 </html>`;
 
 app.get('/login', (req, res) => {
-  if (ACCESS_PASSWORD && parseCookies(req)[AUTH_COOKIE] === authToken()) return res.redirect('/');
+  if (activePassword && parseCookies(req)[AUTH_COOKIE] === authToken()) return res.redirect('/');
   res.send(LOGIN_PAGE.replace('__ERROR__', ''));
 });
 
@@ -107,7 +107,7 @@ app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
     return res.status(429).send(LOGIN_PAGE.replace('__ERROR__',
       '<p class="err">Trop de tentatives. Réessayez dans 15 minutes.</p>'));
   }
-  if (!ACCESS_PASSWORD || req.body.password === ACCESS_PASSWORD) {
+  if (!activePassword || req.body.password === activePassword) {
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
     const secure  = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.setHeader('Set-Cookie',
