@@ -12,14 +12,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '5mb' }));
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD;
+// activePassword can be updated at runtime via /api/change-password (stored in DB)
+let activePassword    = process.env.ACCESS_PASSWORD || '';
 const COOKIE_SECRET   = process.env.COOKIE_SECRET || 'change-this-secret-in-env';
 const AUTH_COOKIE     = 'sophrocr_session';
+const { createHmac } = require('crypto');
 
-function authToken() {
-  return require('crypto')
-    .createHmac('sha256', COOKIE_SECRET)
-    .update(ACCESS_PASSWORD || '')
+function authToken(pwd) {
+  return createHmac('sha256', COOKIE_SECRET)
+    .update(pwd !== undefined ? pwd : activePassword)
     .digest('hex');
 }
 
@@ -35,7 +36,7 @@ function parseCookies(req) {
 }
 
 function requireAuth(req, res, next) {
-  if (!ACCESS_PASSWORD) return next(); // désactivé si variable non définie
+  if (!activePassword) return next();
   if (req.path === '/login' || req.path === '/logout') return next();
   if (parseCookies(req)[AUTH_COOKIE] === authToken()) return next();
   if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Non autorisé.' });
@@ -72,7 +73,7 @@ button:hover{background:#235f69}
     <p class="sub">Sophrologie caycédienne · Vanessa Slous</p>
   </div>
   <form method="POST" action="/login">
-    <input type="text" name="username" value="vanessa" autocomplete="username" style="display:none" aria-hidden="true" tabindex="-1">
+    <input type="text" name="username" value="vanessa" autocomplete="username" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
     <label for="pwd">Mot de passe</label>
     <input type="password" id="pwd" name="password" autofocus autocomplete="current-password" placeholder="••••••••">
     <button type="submit">Accéder</button>
@@ -144,6 +145,16 @@ const pool = new Pool({
 });
 
 async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS config (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+  // Load stored password (takes precedence over env var once set via the UI)
+  const cfg = await pool.query(`SELECT value FROM config WHERE key = 'password'`);
+  if (cfg.rows.length > 0) activePassword = cfg.rows[0].value;
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comptes_rendus (
       id          TEXT PRIMARY KEY,
@@ -479,6 +490,34 @@ app.post('/api/prompt/reset', (req, res) => {
     if (fs.existsSync(PROMPT_CUSTOM)) fs.unlinkSync(PROMPT_CUSTOM);
     res.json({ prompt: fs.readFileSync(PROMPT_DEFAULT, 'utf-8') });
   } catch (err) { res.status(500).json({ error: "Impossible de réinitialiser le prompt." }); }
+});
+
+// ── CHANGE PASSWORD ───────────────────────────────────────────────────────────
+app.post('/api/change-password', express.json(), async (req, res) => {
+  const { current, next: newPwd } = req.body;
+  if (!newPwd || newPwd.trim().length < 8) {
+    return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+  }
+  if (activePassword && current !== activePassword) {
+    return res.status(401).json({ error: 'Mot de passe actuel incorrect.' });
+  }
+  try {
+    await pool.query(
+      `INSERT INTO config (key, value) VALUES ('password', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [newPwd.trim()]
+    );
+    activePassword = newPwd.trim();
+    // Issue a new cookie so the current session stays valid with the new password
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+    const secure  = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.setHeader('Set-Cookie',
+      `${AUTH_COOKIE}=${authToken()}; Path=/; HttpOnly; SameSite=Strict; Expires=${expires}${secure ? '; Secure' : ''}`
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la sauvegarde du mot de passe.' });
+  }
 });
 
 // ── START ─────────────────────────────────────────────────────────────────────
