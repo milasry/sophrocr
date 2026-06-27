@@ -462,6 +462,25 @@ app.get('/api/history/:client/:id/download', async (req, res) => {
   }
 });
 
+// ── PUT /api/history/:client/:id ─────────────────────────────────────────────
+app.put('/api/history/:client/:id', async (req, res) => {
+  try {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'ID invalide.' });
+    const { cr, client, date_seance, seance, motif, techniques, phase } = req.body;
+    if (!cr?.trim()) return res.status(400).json({ error: 'Le texte du CR ne peut pas être vide.' });
+    const newKey = clientKey(client || req.params.client);
+    const { rowCount } = await pool.query(
+      `UPDATE comptes_rendus SET cr=$1, client=$2, client_key=$3, date_seance=$4, seance=$5, motif=$6, techniques=$7, phase=$8
+       WHERE id=$9 AND client_key=$10`,
+      [cr.trim(), client || req.params.client, newKey, date_seance, seance, motif, techniques, phase || '', req.params.id, req.params.client]
+    );
+    if (rowCount === 0) return res.status(404).json({ error: 'CR introuvable.' });
+    res.json({ ok: true, newKey });
+  } catch (err) {
+    res.status(500).json({ error: 'Impossible de mettre à jour ce CR.' });
+  }
+});
+
 // ── DELETE /api/history/:client/:id ──────────────────────────────────────────
 app.delete('/api/history/:client/:id', async (req, res) => {
   try {

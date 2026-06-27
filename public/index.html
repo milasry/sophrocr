@@ -243,6 +243,15 @@ textarea { resize: vertical; }
 .btn-cr-del:hover { background: var(--plum-light); }
 
 .cr-view-panel { background: #FAFAFA; border-top: 1px solid var(--border); padding: 14px 16px; display: none; }
+.cr-edit-meta  { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.cr-edit-meta .form-group { margin: 0; flex: 1; min-width: 110px; }
+.cr-edit-meta .form-group label { font-size: 10.5px; }
+.cr-edit-meta .form-group input { font-size: 13px; padding: 7px 10px; }
+.cr-edit-textarea { width: 100%; min-height: 320px; font-family: "Courier New", monospace; font-size: 12.5px; line-height: 1.55; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 7px; resize: vertical; color: var(--dark); background: white; }
+.cr-edit-textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(46,125,138,.1); }
+.cr-edit-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cr-edit-actions .btn { padding: 8px 16px; font-size: 13px; }
+.cr-edit-msg { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
 .cr-view-meta { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-bottom: 12px; font-size: 12px; color: var(--gray); }
 .cr-view-meta span strong { color: var(--dark); }
 .cr-view-text { font-family: "Courier New", monospace; font-size: 12px; line-height: 1.65; white-space: pre-wrap; color: var(--dark); margin: 0; }
@@ -1151,7 +1160,7 @@ function crItemHTML(s, showClient) {
           ${details ? `<div class="cr-details-line">${details}</div>` : ''}
         </div>
         <div class="cr-item-actions">
-          <button class="btn-cr-voir">Voir</button>
+          <button class="btn-cr-voir">Modifier</button>
           <a class="btn-cr-dl" href="/api/history/${encodeURIComponent(s.folder)}/${encodeURIComponent(s.id)}/download" download>↓ Word</a>
           <button class="btn-cr-del">Supprimer</button>
         </div>
@@ -1267,7 +1276,7 @@ $('histContainer').addEventListener('click', async e => {
     return;
   }
 
-  // Voir
+  // Modifier
   if (e.target.classList.contains('btn-cr-voir')) {
     const item   = e.target.closest('.cr-item');
     const panel  = item.querySelector('.cr-view-panel');
@@ -1275,11 +1284,11 @@ $('histContainer').addEventListener('click', async e => {
     if (isOpen) {
       panel.style.display   = 'none';
       e.target.dataset.open = '';
-      e.target.textContent  = 'Voir';
+      e.target.textContent  = 'Modifier';
       return;
     }
     e.target.dataset.open = '1';
-    e.target.textContent  = 'Masquer';
+    e.target.textContent  = 'Fermer';
     panel.style.display   = 'block';
     if (panel.dataset.loaded) return;
     const folder = item.dataset.folder, id = item.dataset.id;
@@ -1290,18 +1299,96 @@ $('histContainer').addEventListener('click', async e => {
       if (!res.ok) throw new Error(data.error);
       panel.dataset.loaded = '1';
       panel.innerHTML = `
-        <div class="cr-view-meta">
-          ${data.motif      ? `<span><strong>Motif</strong> : ${escHtml(data.motif)}</span>` : ''}
-          ${data.techniques ? `<span><strong>Techniques</strong> : ${escHtml(data.techniques)}</span>` : ''}
-          ${data.phase      ? `<span><strong>Phase</strong> : ${escHtml(data.phase)}</span>` : ''}
-          <span><strong>Sauvegardé le</strong> : ${escHtml(new Date(data.savedAt).toLocaleDateString('fr-FR'))}</span>
+        <div class="cr-edit-meta">
+          <div class="form-group"><label>Client</label><input type="text" class="cr-edit-client" value="${escHtml(data.client || '')}"></div>
+          <div class="form-group"><label>Date</label><input type="text" class="cr-edit-date" value="${escHtml(data.date || '')}"></div>
+          <div class="form-group" style="max-width:80px"><label>Séance</label><input type="text" class="cr-edit-seance" value="${escHtml(data.seance || '')}"></div>
+          <div class="form-group"><label>Motif</label><input type="text" class="cr-edit-motif" value="${escHtml(data.motif || '')}"></div>
+          <div class="form-group"><label>Techniques</label><input type="text" class="cr-edit-techniques" value="${escHtml(data.techniques || '')}"></div>
+          <div class="form-group" style="max-width:100px"><label>Phase</label><input type="text" class="cr-edit-phase" value="${escHtml(data.phase || '')}"></div>
         </div>
-        <pre class="cr-view-text">${escHtml(data.cr || '')}</pre>`;
+        <textarea class="cr-edit-textarea">${escHtml(data.cr || '')}</textarea>
+        <div class="cr-edit-actions">
+          <button class="btn btn-primary btn-cr-save">Enregistrer</button>
+          <button class="btn btn-secondary btn-cr-dl-edit">↓ Télécharger le Word</button>
+        </div>
+        <div class="cr-edit-msg"></div>`;
     } catch {
       panel.innerHTML = `<p style="color:var(--error);font-size:12px;padding:8px;">Impossible de charger ce CR.</p>`;
       e.target.dataset.open = '';
-      e.target.textContent  = 'Voir';
+      e.target.textContent  = 'Modifier';
     }
+    return;
+  }
+
+  // Enregistrer les modifications
+  if (e.target.classList.contains('btn-cr-save')) {
+    const item   = e.target.closest('.cr-item');
+    const panel  = item.querySelector('.cr-view-panel');
+    const folder = item.dataset.folder, id = item.dataset.id;
+    const msgEl  = panel.querySelector('.cr-edit-msg');
+    const client     = panel.querySelector('.cr-edit-client').value.trim();
+    const date       = panel.querySelector('.cr-edit-date').value.trim();
+    const seance     = panel.querySelector('.cr-edit-seance').value.trim();
+    const motif      = panel.querySelector('.cr-edit-motif').value.trim();
+    const techniques = panel.querySelector('.cr-edit-techniques').value.trim();
+    const phase      = panel.querySelector('.cr-edit-phase').value.trim();
+    const cr         = panel.querySelector('.cr-edit-textarea').value.trim();
+    const btn = e.target;
+    btn.disabled = true; btn.textContent = 'Enregistrement…'; msgEl.textContent = '';
+    try {
+      const res  = await fetch(`/api/history/${encodeURIComponent(folder)}/${encodeURIComponent(id)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cr, client, date_seance: date, seance, motif, techniques, phase })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur.');
+      const newKey = data.newKey || folder;
+      item.dataset.folder = newKey;
+      // Update download link
+      const dlLink = item.querySelector('.btn-cr-dl');
+      if (dlLink) dlLink.href = `/api/history/${encodeURIComponent(newKey)}/${encodeURIComponent(id)}/download`;
+      // Update list row
+      const idx = histAllSeances.findIndex(s => s.folder === folder && s.id === id);
+      if (idx !== -1) histAllSeances[idx] = { ...histAllSeances[idx], client, date, seance, motif, techniques, phase, folder: newKey };
+      const dateLine   = item.querySelector('.cr-date');   if (dateLine)   dateLine.textContent   = date || '';
+      const sLine      = item.querySelector('.cr-seance'); if (sLine)      sLine.textContent      = `Séance ${seance || '?'}`;
+      const clientLine = item.querySelector('.cr-client-name'); if (clientLine) clientLine.textContent = client;
+      msgEl.style.color = 'var(--teal)'; msgEl.textContent = 'Modifications enregistrées.';
+    } catch (err) {
+      msgEl.style.color = 'var(--error)'; msgEl.textContent = err.message || 'Erreur.';
+    }
+    btn.disabled = false; btn.textContent = 'Enregistrer';
+    return;
+  }
+
+  // Télécharger Word depuis l'éditeur
+  if (e.target.classList.contains('btn-cr-dl-edit')) {
+    const item   = e.target.closest('.cr-item');
+    const panel  = item.querySelector('.cr-view-panel');
+    const client     = panel.querySelector('.cr-edit-client').value.trim();
+    const date       = panel.querySelector('.cr-edit-date').value.trim();
+    const seance     = panel.querySelector('.cr-edit-seance').value.trim();
+    const motif      = panel.querySelector('.cr-edit-motif').value.trim();
+    const techniques = panel.querySelector('.cr-edit-techniques').value.trim();
+    const phase      = panel.querySelector('.cr-edit-phase').value.trim();
+    const cr         = panel.querySelector('.cr-edit-textarea').value.trim();
+    const btn = e.target;
+    btn.disabled = true; btn.textContent = 'Préparation…';
+    try {
+      const res = await fetch('/api/download', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client, date, seance, motif, techniques, phase, cr })
+      });
+      if (!res.ok) throw new Error('Le téléchargement a échoué.');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `CR_${client || 'client'}_S${seance || ''}.docx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) { alert(err.message || 'Connexion perdue.'); }
+    btn.disabled = false; btn.textContent = '↓ Télécharger le Word';
     return;
   }
 
@@ -1421,7 +1508,7 @@ $('pwdForm').addEventListener('submit', async (e) => {
 // ══════════════════════════════════════════════════
 
 function parseCRClient(text) {
-  const s = { resume: "", preSophro: "", noteClinic: "", technique: "", pheno: "", orientations: [] };
+  const s = { resume: "", preSophro: "", noteClinic: "", technique: "", techniqueHeader: "2. TECHNIQUE PRATIQUÉE", pheno: "", orientations: [] };
   const HEADERS = [
     { key: "resume",    re: /^RÉSUMÉ EXÉCUTIF[^\n]*/im },
     { key: "preSophro", re: /^1\.\s*ÉCHANGES PRÉ-SOPHRONIQUES[^\n]*/im },
@@ -1431,7 +1518,7 @@ function parseCRClient(text) {
   ];
   const found = HEADERS.map(({ key, re }) => {
     const m = re.exec(text);
-    return m ? { key, start: m.index, contentStart: m.index + m[0].length } : null;
+    return m ? { key, start: m.index, contentStart: m.index + m[0].length, header: m[0].trim() } : null;
   }).filter(Boolean);
 
   for (let i = 0; i < found.length; i++) {
@@ -1439,7 +1526,7 @@ function parseCRClient(text) {
     const nextStart = found[i + 1]?.start ?? text.length;
     const content = text.slice(contentStart, nextStart).trim();
     if      (key === "resume")    { s.resume    = content; }
-    else if (key === "technique") { s.technique = content; }
+    else if (key === "technique") { s.technique = content; s.techniqueHeader = found[i].header; }
     else if (key === "pheno")     { s.pheno     = content; }
     else if (key === "preSophro") {
       const nm = content.match(/^Note clinique[\s\S]*$/im);
@@ -1508,7 +1595,7 @@ function renderWordPreview() {
     ${noteHTML}
     <div class="wp-sp"></div>
 
-    <div class="wp-h1">2. TECHNIQUE PRATIQUÉE</div>
+    <div class="wp-h1">${escHtml(s.techniqueHeader || '2. TECHNIQUE PRATIQUÉE')}</div>
     <div class="wp-sp-sm"></div>
     ${wpLines(s.technique)}
     <div class="wp-sp"></div>

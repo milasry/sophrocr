@@ -119,6 +119,7 @@ function parseCR(text) {
     presSophro: "",
     noteClinic: "",
     technique: "",
+    techniqueHeader: "2. TECHNIQUE PRATIQUÉE",
     pheno: "",
     orientations: []
   };
@@ -135,7 +136,7 @@ function parseCR(text) {
   // Localiser chaque en-tête ; garder seulement ceux trouvés
   const found = HEADER_PATTERNS.map(({ key, re }) => {
     const m = re.exec(text);
-    return m ? { key, start: m.index, contentStart: m.index + m[0].length } : null;
+    return m ? { key, start: m.index, contentStart: m.index + m[0].length, header: m[0].trim() } : null;
   }).filter(Boolean);
 
   // Découper le contenu entre chaque paire d'en-têtes consécutifs
@@ -148,6 +149,7 @@ function parseCR(text) {
       sections.resume = content;
     } else if (key === "technique") {
       sections.technique = content;
+      sections.techniqueHeader = found[i].header;
     } else if (key === "pheno") {
       sections.pheno = content;
     } else if (key === "preSophro") {
@@ -309,7 +311,7 @@ async function generateCR(data) {
         sp(),
 
         // ── 2. TECHNIQUE PRATIQUÉE ─────────────────────────────
-        h1("2. TECHNIQUE PRATIQUÉE"),
+        h1(sections.techniqueHeader || "2. TECHNIQUE PRATIQUÉE"),
         sp(60),
         ...sections.technique.split("\n").filter(l => l.trim()).map(l => body(l.trim())),
         sp(),
