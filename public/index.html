@@ -318,7 +318,6 @@ textarea { resize: vertical; }
     </div>
     <a class="header-link" href="https://sophroslous.fr" target="_blank" rel="noopener" style="text-align:center;">sophroslous.fr</a>
     <div class="header-right">
-      <a class="header-link" href="/settings" style="font-size:12px;">Paramètres</a>
       <a class="header-link" href="/logout" style="opacity:0.6; font-size:12px;">Déconnexion</a>
     </div>
   </div>
@@ -495,6 +494,30 @@ textarea { resize: vertical; }
         <button class="btn btn-danger"  id="resetPromptBtn">Réinitialiser</button>
       </div>
       <div class="confirm-msg" id="promptConfirm"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Mot de passe d'accès</div>
+      <form id="pwdForm" autocomplete="on">
+        <input type="text" name="username" value="vanessa" autocomplete="username"
+          tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
+        <div class="form-group">
+          <label for="pwdCurrent">Mot de passe actuel</label>
+          <input type="password" id="pwdCurrent" name="current-password" autocomplete="current-password" placeholder="••••••••" style="max-width:340px;">
+        </div>
+        <div class="form-group">
+          <label for="pwdNext">Nouveau mot de passe</label>
+          <input type="password" id="pwdNext" name="new-password" autocomplete="new-password" placeholder="Min. 8 caractères" style="max-width:340px;">
+        </div>
+        <div class="form-group">
+          <label for="pwdConfirm">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="pwdConfirmInput" name="confirm-password" autocomplete="new-password" placeholder="••••••••" style="max-width:340px;">
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="pwdSubmitBtn">Enregistrer</button>
+        </div>
+      </form>
+      <div class="confirm-msg" id="pwdMsg"></div>
     </div>
   </div>
 </div>
@@ -1303,6 +1326,47 @@ function showConfirm(msg, type) {
 
 $('savePromptBtn').addEventListener('click', savePrompt);
 $('resetPromptBtn').addEventListener('click', resetPrompt);
+
+// ── CHANGE PASSWORD ────────────────────────────────
+$('pwdForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const current = $('pwdCurrent').value;
+  const next    = $('pwdNext').value;
+  const confirm = $('pwdConfirmInput').value;
+  const msg     = $('pwdMsg');
+  const btn     = $('pwdSubmitBtn');
+
+  msg.style.display = 'none';
+
+  function pwdMsg(text, ok) {
+    msg.textContent = text;
+    msg.style.color = ok ? 'var(--teal)' : 'var(--error)';
+    msg.style.display = 'block';
+  }
+
+  if (next !== confirm) { pwdMsg('Les deux nouveaux mots de passe ne correspondent pas.', false); return; }
+  if (next.length < 8)  { pwdMsg('Le nouveau mot de passe doit contenir au moins 8 caractères.', false); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement…';
+
+  try {
+    const res  = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current, next })
+    });
+    const data = await res.json();
+    if (res.ok) { pwdMsg('Mot de passe modifié avec succès.', true); $('pwdForm').reset(); }
+    else        { pwdMsg(data.error || 'Une erreur est survenue.', false); }
+  } catch {
+    pwdMsg('Impossible de contacter le serveur.', false);
+  }
+
+  msg.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = 'Enregistrer';
+});
 
 // ══════════════════════════════════════════════════
 //  WORD PREVIEW
