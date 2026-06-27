@@ -499,8 +499,10 @@ textarea { resize: vertical; }
     <div class="card" style="margin-top:16px;">
       <div class="card-title">Mot de passe d'accès</div>
       <form id="pwdForm" autocomplete="on">
-        <input type="text" name="username" value="vanessa" autocomplete="username"
-          tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
+        <div class="form-group">
+          <label>Identifiant</label>
+          <input type="text" name="username" autocomplete="username" placeholder="vanessa" style="max-width:340px;">
+        </div>
         <div class="form-group">
           <label for="pwdCurrent">Mot de passe actuel</label>
           <input type="password" id="pwdCurrent" name="current-password" autocomplete="current-password" placeholder="••••••••" style="max-width:340px;">

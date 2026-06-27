@@ -73,9 +73,10 @@ button:hover{background:#235f69}
     <p class="sub">Sophrologie caycédienne · Vanessa Slous</p>
   </div>
   <form method="POST" action="/login">
-    <input type="text" name="username" value="vanessa" autocomplete="username" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;">
+    <label for="usr">Identifiant</label>
+    <input type="text" id="usr" name="username" autocomplete="username" placeholder="vanessa" style="margin-bottom:14px">
     <label for="pwd">Mot de passe</label>
-    <input type="password" id="pwd" name="password" autofocus autocomplete="current-password" placeholder="••••••••">
+    <input type="password" id="pwd" name="password" autocomplete="current-password" placeholder="••••••••">
     <button type="submit">Accéder</button>
     __ERROR__
   </form>
