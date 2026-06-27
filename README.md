@@ -28,7 +28,7 @@ sophrocr/
 ├── prompts/
 │   └── system_prompt.txt  → règles caycédiennes et structure de CR envoyées à Claude
 ├── public/
-│   ├── index.html         → app principale (onglets : Séance · Historique)
+│   ├── index.html         → app principale (onglets : Séance · Historique · Paramètres)
 │   ├── rgpd.html          → page confidentialité & RGPD
 │   └── robots.txt         → bloque l'indexation par les moteurs de recherche
 ├── .env.example           → modèle de configuration
@@ -99,11 +99,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Déploiement (Railway)
 
 1. Créer un projet sur [Railway](https://railway.app)
-2. Connecter ce dépôt GitHub
-3. Ajouter les variables d'environnement dans Railway → Settings → Variables
-4. Railway détecte automatiquement `npm start` et déploie
+2. Choisir **Deploy from GitHub repo** → sélectionner ce dépôt
+3. Dans le service → onglet **Variables** → ajouter toutes les variables du tableau ci-dessus
+4. Dans **Settings → Networking → Generate Domain** pour obtenir l'URL publique
+5. Railway détecte automatiquement `npm start` et redéploie à chaque `git push`
 
 L'URL générée par Railway est aléatoire (non devinable) + le mot de passe empêche tout accès non autorisé.
+
+> **Note** : le mot de passe et le prompt personnalisé modifiés via l'interface sont stockés en base de données — ils survivent aux redéploiements.
 
 ---
 

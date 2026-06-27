@@ -74,7 +74,7 @@ button:hover{background:#235f69}
   </div>
   <form method="POST" action="/login">
     <label for="usr">Identifiant</label>
-    <input type="text" id="usr" name="username" autocomplete="username" placeholder="van" style="margin-bottom:14px">
+    <input type="text" id="usr" name="username" autocomplete="username" autofocus style="margin-bottom:14px">
     <label for="pwd">Mot de passe</label>
     <input type="password" id="pwd" name="password" autocomplete="current-password" placeholder="••••••••">
     <button type="submit">Accéder</button>
@@ -152,9 +152,12 @@ async function initDB() {
       value TEXT NOT NULL
     )
   `);
-  // Load stored password (takes precedence over env var once set via the UI)
-  const cfg = await pool.query(`SELECT value FROM config WHERE key = 'password'`);
-  if (cfg.rows.length > 0) activePassword = cfg.rows[0].value;
+  // Load stored password and custom prompt from DB
+  const cfgRows = await pool.query(`SELECT key, value FROM config WHERE key IN ('password', 'prompt')`);
+  for (const row of cfgRows.rows) {
+    if (row.key === 'password') activePassword = row.value;
+    if (row.key === 'prompt')   cachedCustomPrompt = row.value;
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comptes_rendus (
@@ -192,9 +195,14 @@ const PROMPT_DEFAULT = path.join(__dirname, 'prompts', 'system_prompt.txt');
 const PROMPT_CUSTOM  = path.join(__dirname, 'prompts', 'system_prompt_custom.txt');
 const REFERENCE_PATH = path.join(__dirname, 'prompts', 'reference_caycedienne.txt');
 
+// Custom prompt stored in DB (key='prompt') so it survives redeploys.
+// Falls back to filesystem custom file, then to the default.
+let cachedCustomPrompt = null;
+
 function getSystemPrompt() {
-  const file = fs.existsSync(PROMPT_CUSTOM) ? PROMPT_CUSTOM : PROMPT_DEFAULT;
-  return fs.readFileSync(file, 'utf-8');
+  if (cachedCustomPrompt !== null) return cachedCustomPrompt;
+  if (fs.existsSync(PROMPT_CUSTOM)) return fs.readFileSync(PROMPT_CUSTOM, 'utf-8');
+  return fs.readFileSync(PROMPT_DEFAULT, 'utf-8');
 }
 function getReferenceDoc() {
   return fs.readFileSync(REFERENCE_PATH, 'utf-8');
@@ -476,18 +484,25 @@ app.get('/api/prompt', (req, res) => {
 });
 
 // ── POST /api/prompt ──────────────────────────────────────────────────────────
-app.post('/api/prompt', (req, res) => {
+app.post('/api/prompt', async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt?.trim()) return res.status(400).json({ error: "Le prompt ne peut pas être vide." });
-    fs.writeFileSync(PROMPT_CUSTOM, prompt, 'utf-8');
+    await pool.query(
+      `INSERT INTO config (key, value) VALUES ('prompt', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [prompt]
+    );
+    cachedCustomPrompt = prompt;
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: "Impossible de sauvegarder le prompt." }); }
 });
 
 // ── POST /api/prompt/reset ────────────────────────────────────────────────────
-app.post('/api/prompt/reset', (req, res) => {
+app.post('/api/prompt/reset', async (req, res) => {
   try {
+    await pool.query(`DELETE FROM config WHERE key = 'prompt'`);
+    cachedCustomPrompt = null;
     if (fs.existsSync(PROMPT_CUSTOM)) fs.unlinkSync(PROMPT_CUSTOM);
     res.json({ prompt: fs.readFileSync(PROMPT_DEFAULT, 'utf-8') });
   } catch (err) { res.status(500).json({ error: "Impossible de réinitialiser le prompt." }); }
