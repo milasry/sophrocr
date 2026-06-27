@@ -106,6 +106,12 @@ function box(paragraphs, bg = COLORS.lightTeal) {
  * Découpe le texte brut renvoyé par Claude (structure en 4
  * sections + résumé exécutif) en sections exploitables pour
  * la mise en forme Word.
+ *
+ * Stratégie : scan linéaire — on localise chaque en-tête de
+ * section ancré en début de ligne (^, flag m), puis on découpe
+ * le texte entre positions consécutives. Cela élimine tout
+ * risque de chevauchement si "1.", "2." ou un mot-clé de section
+ * apparaît à l'intérieur du corps d'une autre section.
  */
 function parseCR(text) {
   const sections = {
@@ -117,34 +123,60 @@ function parseCR(text) {
     orientations: []
   };
 
-  const resumeMatch    = text.match(/RÉSUMÉ EXÉCUTIF[\s\S]*?(?=1\.|ÉCHANGES)/i);
-  const preSophroMatch = text.match(/(?:1\.|ÉCHANGES PRÉ-SOPHRONIQUES)[\s\S]*?(?=2\.|TECHNIQUE)/i);
-  const techniqueMatch = text.match(/(?:2\.|TECHNIQUE PRATIQUÉE)[\s\S]*?(?=3\.|PHÉNO)/i);
-  const phenoMatch     = text.match(/(?:3\.|PHÉNODESCRIPTION)[\s\S]*?(?=4\.|ORIENTATIONS)/i);
-  const orientMatch    = text.match(/(?:4\.|ORIENTATIONS)[\s\S]*$/i);
+  // Patterns ancrés en début de ligne, dans l'ordre fixe du document
+  const HEADER_PATTERNS = [
+    { key: "resume",    re: /^RÉSUMÉ EXÉCUTIF[^\n]*/im },
+    { key: "preSophro", re: /^1\.\s*ÉCHANGES PRÉ-SOPHRONIQUES[^\n]*/im },
+    { key: "technique", re: /^2\.\s*TECHNIQUE PRATIQUÉE[^\n]*/im },
+    { key: "pheno",     re: /^3\.\s*PHÉNODESCRIPTION[^\n]*/im },
+    { key: "orient",    re: /^4\.\s*ORIENTATIONS[^\n]*/im },
+  ];
 
-  if (resumeMatch)    sections.resume    = resumeMatch[0].replace(/RÉSUMÉ EXÉCUTIF/i, "").trim();
-  if (techniqueMatch) sections.technique = techniqueMatch[0].replace(/2\.|TECHNIQUE PRATIQUÉE/i, "").trim();
-  if (phenoMatch)     sections.pheno     = phenoMatch[0].replace(/3\.|PHÉNODESCRIPTION/i, "").trim();
+  // Localiser chaque en-tête ; garder seulement ceux trouvés
+  const found = HEADER_PATTERNS.map(({ key, re }) => {
+    const m = re.exec(text);
+    return m ? { key, start: m.index, contentStart: m.index + m[0].length } : null;
+  }).filter(Boolean);
 
-  if (preSophroMatch) {
-    const raw = preSophroMatch[0].replace(/1\.|ÉCHANGES PRÉ-SOPHRONIQUES/i, "").trim();
-    const noteMatch = raw.match(/Note clinique[\s\S]*$/i);
-    if (noteMatch) {
-      sections.noteClinic = noteMatch[0].trim();
-      sections.presSophro = raw.replace(noteMatch[0], "").trim();
-    } else {
-      sections.presSophro = raw;
+  // Découper le contenu entre chaque paire d'en-têtes consécutifs
+  for (let i = 0; i < found.length; i++) {
+    const { key, contentStart } = found[i];
+    const nextStart = found[i + 1]?.start ?? text.length;
+    const content = text.slice(contentStart, nextStart).trim();
+
+    if (key === "resume") {
+      sections.resume = content;
+    } else if (key === "technique") {
+      sections.technique = content;
+    } else if (key === "pheno") {
+      sections.pheno = content;
+    } else if (key === "preSophro") {
+      const noteMatch = content.match(/^Note clinique[\s\S]*$/im);
+      if (noteMatch) {
+        sections.noteClinic = noteMatch[0].trim();
+        sections.presSophro = content.slice(0, noteMatch.index).trim();
+      } else {
+        sections.presSophro = content;
+      }
+    } else if (key === "orient") {
+      sections.orientations = content
+        .split("\n")
+        .map(l => l.replace(/^[–\-•]\s*/, "").trim())
+        .filter(l => l.length > 0);
     }
   }
 
-  if (orientMatch) {
-    const raw = orientMatch[0].replace(/4\.|ORIENTATIONS/i, "").trim();
-    sections.orientations = raw
-      .split("\n")
-      .map(l => l.replace(/^[–\-•]\s*/, "").trim())
-      .filter(l => l.length > 0);
-  }
+  // Bug 3 — normaliser les références système : S3 → S#3, S1 → S#1
+  // \bS(\d) : S à la frontière d'un mot suivi d'un chiffre.
+  // S#3 n'est pas touché car S y est suivi de # (pas d'un chiffre).
+  // SAVa, SDNc, etc. ne correspondent pas (S suivi d'une lettre).
+  const norm = t => t.replace(/\bS(\d)/g, "S#$1");
+  sections.resume       = norm(sections.resume);
+  sections.presSophro   = norm(sections.presSophro);
+  sections.noteClinic   = norm(sections.noteClinic);
+  sections.technique    = norm(sections.technique);
+  sections.pheno        = norm(sections.pheno);
+  sections.orientations = sections.orientations.map(norm);
 
   return sections;
 }

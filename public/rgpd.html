@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidentialité & RGPD — SophroCR</title>
+<style>
+:root {
+  --teal:      #2E7D8A;
+  --teal-dark: #235f69;
+  --teal-light:#E8F4F6;
+  --plum:      #5B3A6E;
+  --dark:      #1A1A1A;
+  --gray:      #666666;
+  --gray-light:#F5F5F5;
+  --border:    #E0E0E0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Calibri, "Segoe UI", Arial, sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; }
+
+.app-header { background: var(--teal); padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.header-inner { max-width: 820px; margin: 0 auto; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-size: 14px; font-weight: bold; color: white; flex-shrink: 0; }
+.brand-name { font-family: Georgia, serif; font-size: 18px; color: white; font-weight: bold; }
+.back-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; }
+.back-link:hover { color: white; }
+
+.page { max-width: 820px; margin: 0 auto; padding: 36px 24px 80px; }
+
+h1 { font-family: Georgia, serif; font-size: 22px; color: var(--teal); font-weight: bold; border-bottom: 2px solid var(--teal); padding-bottom: 10px; margin-bottom: 28px; }
+
+section { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px; margin-bottom: 16px; }
+section h2 { font-family: Georgia, serif; font-size: 15px; color: var(--teal); font-weight: bold; margin-bottom: 14px; }
+p, li { font-size: 14px; line-height: 1.65; color: var(--dark); }
+p + p { margin-top: 10px; }
+ul { padding-left: 20px; margin-top: 8px; }
+li { margin-bottom: 6px; }
+
+.status-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; }
+.status-table th { text-align: left; font-size: 11.5px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 10px; border-bottom: 2px solid var(--border); }
+.status-table td { padding: 10px 10px; border-bottom: 1px solid #F0F0F0; vertical-align: top; }
+.status-table tr:last-child td { border-bottom: none; }
+.tag { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.tag-ok    { background: #E8F5E9; color: #2E7D32; }
+.tag-temp  { background: #FFF8E1; color: #F57F17; }
+.tag-store { background: var(--teal-light); color: var(--teal); }
+
+.highlight { background: var(--teal-light); border-left: 3px solid var(--teal); border-radius: 0 6px 6px 0; padding: 12px 16px; margin-top: 12px; font-size: 13.5px; line-height: 1.6; }
+.highlight strong { color: var(--teal); }
+
+a { color: var(--teal); }
+a:hover { color: var(--teal-dark); }
+
+.site-footer { border-top: 1px solid var(--border); background: white; padding: 14px 24px; text-align: center; font-size: 12px; color: #AAAAAA; line-height: 1.8; margin-top: 36px; }
+.site-footer a { color: #AAAAAA; text-decoration: none; }
+.site-footer a:hover { color: var(--teal); }
+.footer-sep { margin: 0 7px; }
+
+@media (max-width: 600px) {
+  .page { padding: 20px 14px 60px; }
+  section { padding: 16px; }
+  .status-table { font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <div class="brand-logo">SC</div>
+      <div class="brand-name">SophroCR</div>
+    </a>
+    <a class="back-link" href="/">← Retour à l'outil</a>
+  </div>
+</header>
+
+<div class="page">
+  <h1>Confidentialité &amp; protection des données (RGPD)</h1>
+
+  <!-- CONSENTEMENT -->
+  <section>
+    <h2>Consentement des clients</h2>
+    <p>
+      Vanessa Slous informe chaque client en début de séance que celle-ci peut être enregistrée
+      à des fins de rédaction du compte-rendu, et recueille son accord verbal explicite avant
+      de démarrer l'enregistrement. Aucun enregistrement n'est réalisé sans ce consentement.
+    </p>
+    <p>
+      Les données sont traitées exclusivement dans le cadre du suivi sophrologique individuel et
+      ne sont jamais partagées à des tiers à des fins commerciales.
+    </p>
+  </section>
+
+  <!-- TABLEAU RÉCAPITULATIF -->
+  <section>
+    <h2>Que devient chaque type de données ?</h2>
+    <table class="status-table">
+      <thead>
+        <tr>
+          <th>Données</th>
+          <th>Stockage SophroCR</th>
+          <th>Durée de conservation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Fichier audio</strong></td>
+          <td><span class="tag tag-ok">Non stocké</span></td>
+          <td>Supprimé du serveur immédiatement après envoi à AssemblyAI (voir détail ci-dessous)</td>
+        </tr>
+        <tr>
+          <td><strong>Transcription</strong></td>
+          <td><span class="tag tag-ok">Non stockée</span></td>
+          <td>Affichée dans le navigateur uniquement — jamais enregistrée en base de données</td>
+        </tr>
+        <tr>
+          <td><strong>Compte-rendu (texte)</strong></td>
+          <td><span class="tag tag-store">Enregistré</span></td>
+          <td>Conservé dans l'historique pour permettre la consultation et le retéléchargement. Supprimable à tout moment depuis l'onglet Historique.</td>
+        </tr>
+        <tr>
+          <td><strong>Métadonnées de séance</strong><br><span style="font-size:12px;color:var(--gray);">(prénom, date, motif, technique, phase)</span></td>
+          <td><span class="tag tag-store">Enregistrées</span></td>
+          <td>Conservées avec le compte-rendu dans l'historique. Supprimables avec le CR correspondant.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- AUDIO EN DÉTAIL -->
+  <section>
+    <h2>Les fichiers audio sont-ils vraiment supprimés ?</h2>
+    <p>
+      Oui — le fichier audio suit ce trajet précis et n'est à aucun moment stocké durablement par SophroCR :
+    </p>
+    <ol style="padding-left:20px;margin-top:10px;">
+      <li style="margin-bottom:8px;">
+        <strong>Upload sur le serveur SophroCR</strong> — le fichier est reçu et placé
+        temporairement en mémoire le temps de le transmettre à AssemblyAI.
+      </li>
+      <li style="margin-bottom:8px;">
+        <strong>Transmission à AssemblyAI</strong> — le fichier est envoyé au service de
+        transcription (AssemblyAI, États-Unis — conforme RGPD via Standard Contractual Clauses).
+      </li>
+      <li style="margin-bottom:8px;">
+        <strong>Suppression immédiate côté SophroCR</strong> — dès que la transmission est
+        terminée (ou en cas d'erreur), le fichier temporaire est effacé automatiquement du
+        serveur. Cette suppression est inconditionnelle : elle a lieu même si la transcription
+        échoue.
+      </li>
+      <li>
+        <strong>Traitement et suppression côté AssemblyAI</strong> — AssemblyAI conserve
+        le fichier audio le temps de produire la transcription, puis le supprime automatiquement.
+        Leur politique de rétention prévoit une suppression dans les 72 heures suivant la
+        fin du traitement. Voir leur
+        <a href="https://www.assemblyai.com/legal/privacy-policy" target="_blank" rel="noopener">politique de confidentialité</a>.
+      </li>
+    </ol>
+    <div class="highlight">
+      <strong>En résumé :</strong> une fois la transcription reçue dans l'outil, le fichier audio
+      n'existe plus sur les serveurs de SophroCR. Il subsiste temporairement chez AssemblyAI
+      uniquement le temps du traitement.
+    </div>
+  </section>
+
+  <!-- HISTORIQUE & CR -->
+  <section>
+    <h2>L'historique des comptes-rendus</h2>
+    <p>
+      Les textes des comptes-rendus et les métadonnées de séance (prénom du client, date, motif,
+      technique) sont enregistrés dans une base de données sécurisée afin de permettre la
+      consultation ultérieure et le retéléchargement depuis l'onglet <strong>Historique</strong>.
+    </p>
+    <p>
+      Ces données ne contiennent pas le fichier audio ni la transcription brute — uniquement
+      le compte-rendu rédigé et synthétisé.
+    </p>
+    <p>
+      Vanessa Slous peut supprimer tout compte-rendu à tout moment depuis l'onglet Historique
+      (bouton <em>Supprimer</em>). La suppression est immédiate et définitive.
+    </p>
+  </section>
+
+  <!-- DROITS -->
+  <section>
+    <h2>Droits des personnes concernées</h2>
+    <p>
+      Conformément au Règlement général sur la protection des données (RGPD — UE 2016/679),
+      toute personne dont les données sont traitées via cet outil dispose des droits suivants :
+    </p>
+    <ul>
+      <li><strong>Droit d'accès</strong> — obtenir une copie des données la concernant</li>
+      <li><strong>Droit de rectification</strong> — demander la correction d'informations inexactes</li>
+      <li><strong>Droit à l'effacement</strong> — demander la suppression de ses données</li>
+      <li><strong>Droit d'opposition</strong> — s'opposer au traitement</li>
+    </ul>
+    <p style="margin-top:12px;">
+      Pour exercer ces droits, contactez Vanessa Slous directement via
+      <a href="https://sophroslous.fr" target="_blank" rel="noopener">sophroslous.fr</a>.
+    </p>
+  </section>
+
+  <!-- SÉCURITÉ D'ACCÈS -->
+  <section>
+    <h2>Sécurité de l'accès à l'outil</h2>
+    <p>
+      L'outil SophroCR est protégé par un mot de passe personnel. Sans ce mot de passe,
+      il est impossible d'accéder à l'interface, aux données ou aux API — même en connaissant
+      l'adresse du site.
+    </p>
+    <p style="margin-top:10px;">
+      Mesures techniques en place :
+    </p>
+    <ul style="margin-top:8px;">
+      <li><strong>Mot de passe obligatoire</strong> — chaque visite passe par une authentification</li>
+      <li><strong>Cookie signé (HMAC-SHA256)</strong> — le cookie de session ne peut pas être falsifié sans la clé secrète du serveur</li>
+      <li><strong>Protection anti-force-brute</strong> — après 10 tentatives incorrectes depuis la même adresse IP, l'accès est bloqué pendant 15 minutes</li>
+      <li><strong>URL non indexée</strong> — le site est exclu des moteurs de recherche (<code>robots.txt</code> + header HTTP <code>X-Robots-Tag</code>)</li>
+      <li><strong>HTTPS</strong> — toutes les communications sont chiffrées en transit (en production)</li>
+    </ul>
+    <div class="highlight" style="margin-top:14px;">
+      <strong>Recommandation :</strong> utilisez un mot de passe d'au moins 12 caractères, mêlant
+      majuscules, chiffres et symboles. Évitez les mots du dictionnaire. Ne communiquez ce mot de
+      passe qu'à des personnes de confiance. En cas de doute sur une compromission, il peut être
+      changé à tout moment dans le fichier de configuration du serveur.
+    </div>
+  </section>
+
+  <!-- SERVICES IA -->
+  <section>
+    <h2>Les services IA peuvent-ils lire les données des clients ?</h2>
+    <p>
+      Oui — c'est inévitable dans le cadre de leur fonctionnement. Voici ce que chaque service
+      reçoit concrètement, et ce qu'il en fait.
+    </p>
+
+    <table class="status-table" style="margin-top:14px;">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Ce qu'il reçoit</th>
+          <th>Utilisé pour entraîner l'IA ?</th>
+          <th>Durée de conservation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>AssemblyAI</strong><br><span style="font-size:12px;color:var(--gray);">Transcription audio</span></td>
+          <td>Le fichier audio (voix du client et de la sophrologue)</td>
+          <td><span class="tag tag-ok">Non — contractuellement</span></td>
+          <td>Supprimé après traitement (max 72 h)</td>
+        </tr>
+        <tr>
+          <td><strong>Anthropic / Claude</strong><br><span style="font-size:12px;color:var(--gray);">Génération du CR</span></td>
+          <td>Transcription textuelle + métadonnées (prénom, motif, technique)</td>
+          <td><span class="tag tag-ok">Non — via l'API par défaut</span></td>
+          <td>Logs de sécurité jusqu'à 30 jours, puis suppression</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight" style="margin-top:16px;">
+      <strong>Est-ce dangereux ?</strong><br>
+      Le risque est réel mais comparable à celui de tout service cloud professionnel (Google Docs,
+      Dropbox, iCloud). Les deux services sont certifiés SOC 2 Type 2 et conformes au RGPD via
+      des Clauses Contractuelles Types (CCT) pour les transferts vers les États-Unis. Ni AssemblyAI
+      ni Anthropic n'utilisent les données envoyées via leur API pour entraîner leurs modèles —
+      ils s'y engagent contractuellement dans leurs conditions générales.
+      <br><br>
+      Le risque résiduel est celui d'une faille de sécurité chez l'un de ces prestataires —
+      risque identique à celui de tout outil numérique connecté.
+    </div>
+
+    <p style="margin-top:14px;">
+      <strong>Ce que ça implique pour le consentement :</strong> en plus de l'accord pour
+      l'enregistrement, il est recommandé d'informer les clients que leur voix sera traitée
+      par un service de transcription américain (AssemblyAI) et que la transcription sera
+      analysée par un modèle de langage américain (Anthropic / Claude) pour produire le
+      compte-rendu. Cette information peut être intégrée au formulaire de consentement ou
+      mentionnée verbalement en début de première séance.
+    </p>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  Vanessa Slous · Sophrologue caycédienne
+  <span class="footer-sep">·</span>
+  <a href="https://sophroslous.fr" target="_blank" rel="noopener">sophroslous.fr</a>
+  <span class="footer-sep">·</span>
+  <a href="/">← Retour à l'outil SophroCR</a>
+</footer>
+
+</body>
+</html>

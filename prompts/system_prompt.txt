@@ -9,6 +9,8 @@ RÈGLES ABSOLUES :
 - Verbatim clients conservés entre guillemets quand significatifs.
 - Ne jamais extrapoler ce qui n'est pas dans la transcription.
 - Ne jamais confondre les propos de la sophrologue et du client.
+- Règle d'attribution par terminologie : tout propos qui utilise la terminologie caycédienne (NSL, système, vivance, capacités, protocole, entraînement, réajustement, schémas…) ou qui formule une consigne/guidage vient de la sophrologue — même si le locuteur n'est pas explicitement identifié dans la transcription.
+- Règle en cas de doute sur le locuteur : ne pas attribuer arbitrairement. Signaler l'ambiguïté par une courte note entre crochets, ex. [locuteur incertain], plutôt que de risquer une confusion sophrologue/client.
 - Tout le CR doit tenir sur une page A4.
 - Les Orientations (section 4) : bullets courts uniquement, sans explication (ex. "Horaire : fin d'après-midi" et non "Ajuster l'horaire car le client a un creux de faim").
 

@@ -2,286 +2,1431 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SophroCR — Vanessa Slous</title>
 <style>
-  :root {
-    --teal: #2E7D8A;
-    --plum: #5B3A6E;
-    --light-teal: #E8F4F6;
-    --dark: #1A1A1A;
-    --gray: #666666;
-    --border: #CCCCCC;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: Calibri, "Segoe UI", Arial, sans-serif;
-    background: #FAFAFA;
-    color: var(--dark);
-    margin: 0;
-    padding: 0 16px 60px;
-  }
-  header {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 28px 0 12px;
-  }
-  h1 {
-    font-family: Georgia, serif;
-    color: var(--teal);
-    font-size: 24px;
-    margin: 0 0 4px;
-  }
-  header p { color: var(--gray); margin: 0; font-size: 14px; }
 
-  main {
-    max-width: 760px;
-    margin: 0 auto;
-  }
-  section {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-  }
-  h2 {
-    font-family: Georgia, serif;
-    color: var(--teal);
-    font-size: 16px;
-    border-bottom: 2px solid var(--teal);
-    padding-bottom: 6px;
-    margin-top: 0;
-  }
-  label {
-    display: block;
-    font-size: 13px;
-    color: var(--gray);
-    margin-top: 12px;
-    margin-bottom: 4px;
-  }
-  input[type=text], textarea {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    font-family: inherit;
-    font-size: 14px;
-  }
-  textarea { resize: vertical; }
-  .row { display: flex; gap: 16px; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 180px; }
+:root {
+  --teal:       #2E7D8A;
+  --teal-dark:  #235f69;
+  --teal-light: #E8F4F6;
+  --plum:       #5B3A6E;
+  --plum-light: #F0EBF5;
+  --dark:       #1A1A1A;
+  --gray:       #666666;
+  --gray-light: #F5F5F5;
+  --border:     #E0E0E0;
+  --error:      #B00020;
+}
 
-  button {
-    background: var(--teal);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 16px;
-  }
-  button:hover { opacity: 0.9; }
-  button:disabled { background: #aaa; cursor: not-allowed; }
-  button.secondary {
-    background: white;
-    color: var(--teal);
-    border: 1px solid var(--teal);
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Calibri, "Segoe UI", Arial, sans-serif; background: var(--gray-light); color: var(--dark); min-height: 100vh; display: flex; flex-direction: column; }
 
-  #status {
-    font-size: 13px;
-    margin-top: 10px;
-    min-height: 18px;
-  }
-  #status.error { color: #B00020; }
-  #status.ok { color: var(--teal); }
+/* ── HEADER ─────────────────────────────────────── */
+.app-header { background: var(--teal); padding: 0 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.header-inner { max-width: 820px; margin: 0 auto; height: 60px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.header-right { display: flex; align-items: center; justify-content: flex-end; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-size: 14px; font-weight: bold; color: white; flex-shrink: 0; }
+.brand-name { font-family: Georgia, serif; font-size: 18px; color: white; font-weight: bold; line-height: 1.2; }
+.brand-sub  { font-size: 11.5px; color: rgba(255,255,255,0.7); line-height: 1; }
+.header-link { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; }
+.header-link:hover { color: white; }
 
-  #crPreview {
-    white-space: pre-wrap;
-    font-family: "Courier New", monospace;
-    font-size: 13px;
-    background: var(--light-teal);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px;
-    min-height: 200px;
-  }
-  #previewSection { display: none; }
+/* ── TAB BAR ─────────────────────────────────────── */
+.tab-bar { background: white; border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 99; }
+.tabs { max-width: 820px; margin: 0 auto; display: flex; padding: 0 24px; }
+.tab { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 14px 18px; font-family: inherit; font-size: 14px; color: var(--gray); cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+.tab:hover { color: var(--teal); }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+
+/* ── CONTENT ─────────────────────────────────────── */
+.tab-content { display: none; }
+.tab-content.active { display: block; flex: 1; }
+.page { max-width: 820px; margin: 0 auto; padding: 24px 24px 80px; }
+
+/* ── CARDS ───────────────────────────────────────── */
+.card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 16px; }
+.card-title { font-family: Georgia, serif; color: var(--teal); font-size: 15px; font-weight: bold; border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-bottom: 18px; }
+
+/* ── FORM ────────────────────────────────────────── */
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group + .form-group,
+.form-row   + .form-group,
+.form-group + .form-row,
+.form-row   + .form-row   { margin-top: 20px; }
+.form-row .form-group + .form-group { margin-top: 0; }
+label { font-size: 11.5px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.req { color: var(--teal); }
+input[type=text], textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; color: var(--dark); background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; }
+input:focus, textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(46,125,138,0.12); }
+textarea { resize: vertical; }
+
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn { padding: 11px 24px; border-radius: 7px; border: none; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-primary   { background: var(--teal); color: white; }
+.btn-primary:hover  { background: var(--teal-dark); }
+.btn-primary:disabled { background: #AAAAAA; cursor: not-allowed; }
+.btn-secondary { background: white; color: var(--teal); border: 1.5px solid var(--teal); }
+.btn-secondary:hover { background: var(--teal-light); }
+.btn-danger    { background: white; color: var(--plum); border: 1.5px solid var(--plum); }
+.btn-danger:hover { background: var(--plum-light); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+
+/* ── SPINNER ─────────────────────────────────────── */
+.spinner { width: 14px; height: 14px; border: 2px solid #DDD; border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; display: none; flex-shrink: 0; }
+.spinner.on { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status { display: flex; align-items: center; gap: 7px; font-size: 13px; min-height: 22px; margin-top: 10px; }
+.status.error   { color: var(--error); }
+.status.ok      { color: var(--teal); }
+.status.loading { color: var(--gray); }
+
+/* ── PROGRESS BAR ────────────────────────────────── */
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; width: 35%; background: var(--teal); border-radius: 2px; animation: prog-scan 1.6s ease-in-out infinite; }
+@keyframes prog-scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(385%); } }
+
+/* ── AUDIO SLOTS ─────────────────────────────────── */
+#audioSlots { margin-bottom: 10px; }
+
+.audio-slot {
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 10px;
+  background: white;
+}
+
+.slot-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; background: #FAFAFA; border-bottom: 1px solid var(--border);
+}
+.slot-num { font-size: 13px; font-weight: 700; color: var(--teal); }
+.slot-remove-btn { background: none; border: none; color: #AAAAAA; font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 7px; border-radius: 4px; }
+.slot-remove-btn:hover:not(:disabled) { color: var(--error); background: #FFF0F0; }
+.slot-remove-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.slot-meta-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.slot-meta-label { font-size: 11px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+
+/* Slot zone states */
+.slot-zone { padding: 10px 14px; transition: background 0.15s; }
+.slot-zone.drag-over { background: var(--teal-light); outline: 2px dashed var(--teal); outline-offset: -2px; border-radius: 4px; }
+
+.sz-idle, .sz-selected, .sz-processing, .sz-done { display: none; }
+.slot-zone[data-state="idle"]       .sz-idle       { display: flex; }
+.slot-zone[data-state="selected"]   .sz-selected   { display: flex; }
+.slot-zone[data-state="processing"] .sz-processing { display: block; }
+.slot-zone[data-state="done"]       .sz-done       { display: flex; }
+
+/* Idle */
+.sz-idle { align-items: center; }
+.sz-idle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
+.sz-idle-label svg { width: 18px; height: 18px; stroke: #BBBBBB; flex-shrink: 0; }
+.sz-idle-text { font-size: 13px; color: var(--gray); }
+.sz-pick-text { color: var(--teal); text-decoration: underline; }
+.sz-hint { font-size: 11.5px; color: #BBBBBB; margin-left: auto; flex-shrink: 0; }
+
+/* Selected */
+.sz-selected { align-items: center; gap: 10px; }
+.sz-mic { font-size: 18px; flex-shrink: 0; }
+.sz-file-name { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sz-file-size { font-size: 12px; color: var(--gray); flex-shrink: 0; }
+.sz-clear-btn { background: none; border: none; color: #AAAAAA; font-size: 20px; cursor: pointer; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; line-height: 1; }
+.sz-clear-btn:hover { color: var(--error); background: #FFF0F0; }
+
+/* Processing */
+.sz-proc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sz-proc-msg { font-size: 13px; color: var(--gray); }
+
+/* Done */
+.sz-done { align-items: center; gap: 8px; }
+.sz-done-check { color: var(--teal); font-size: 18px; flex-shrink: 0; }
+.sz-done-label { font-size: 13px; color: var(--dark); font-weight: 600; }
+.sz-redo-btn { background: none; border: none; color: var(--teal); font-size: 12px; font-family: inherit; cursor: pointer; text-decoration: underline; padding: 0; margin-left: 6px; }
+
+/* Slot error */
+.slot-error { font-size: 12.5px; color: var(--error); padding: 0 14px 10px; display: none; }
+.slot-error.visible { display: block; }
+.slot-manual-link { display: inline-block; margin-top: 5px; color: var(--teal); font-size: 12px; text-decoration: underline; }
+
+/* Add audio button */
+.btn-add-audio {
+  width: 100%; padding: 9px; margin-bottom: 14px;
+  background: none; border: 1.5px dashed var(--border); border-radius: 7px;
+  font-family: inherit; font-size: 13px; color: var(--gray); cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-add-audio:hover:not(:disabled) { border-color: var(--teal); color: var(--teal); }
+.btn-add-audio:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Transcribe row */
+.transcribe-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.transcribe-status { font-size: 13px; color: var(--gray); }
+
+/* Or divider */
+.or-divider { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; color: #AAAAAA; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── CR PREVIEW ──────────────────────────────────── */
+#previewSection { display: none; margin-top: 16px; }
+#crPreview { font-family: "Courier New", monospace; font-size: 13px; line-height: 1.65; background: var(--teal-light); border: 1px solid var(--border); border-radius: 6px; padding: 16px; min-height: 260px; width: 100%; color: var(--dark); resize: vertical; }
+
+/* ── WORD PREVIEW ─────────────────────────────────── */
+.preview-mode-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.pmt-btn { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 7px 18px; font-family: inherit; font-size: 13px; color: var(--gray); cursor: pointer; transition: color 0.15s; }
+.pmt-btn:hover { color: var(--teal); }
+.pmt-btn.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+
+/* Paper shell */
+.wp-outer { background: #9E9E9E; padding: 20px; border-radius: 6px; max-height: 640px; overflow-y: auto; }
+.wp-page  { background: white; max-width: 620px; margin: 0 auto; padding: 40px 48px; box-shadow: 0 2px 18px rgba(0,0,0,0.4); font-family: Calibri, "Segoe UI", sans-serif; font-size: 13.5px; color: #1A1A1A; min-height: 280px; }
+
+/* Typography — mirrors generate_cr.js exactly */
+.wp-doc-title { font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: #2E7D8A; margin-bottom: 5px; }
+.wp-entete    { font-size: 12px; color: #666; padding-bottom: 6px; border-bottom: 3px solid #2E7D8A; }
+.wp-sp        { height: 14px; }
+.wp-sp-sm     { height: 6px; }
+.wp-h1        { font-family: Georgia, serif; font-weight: bold; font-size: 14.5px; color: #2E7D8A; border-bottom: 2px solid #2E7D8A; padding-bottom: 3px; }
+.wp-box       { border: 1px solid #CCCCCC; padding: 10px 14px; }
+.wp-box-teal  { background: #E8F4F6; }
+.wp-box-plum  { background: #F0EBF5; }
+.wp-box-title { font-weight: bold; font-size: 13.5px; margin-bottom: 5px; }
+.wp-teal      { color: #2E7D8A; }
+.wp-plum      { color: #5B3A6E; }
+.wp-body-p    { margin: 3px 0; line-height: 1.6; }
+.wp-theme-label { color: #5B3A6E; font-style: italic; font-weight: bold; }
+.wp-bullet    { margin: 3px 0; line-height: 1.6; padding-left: 14px; }
+.wp-doc-footer { margin-top: 26px; padding-top: 5px; border-top: 1px solid #CCCCCC; font-size: 11px; color: #666; text-align: center; }
+
+/* ── EMPTY STATE ─────────────────────────────────── */
+.empty-state { text-align: center; padding: 56px 20px 48px; }
+.empty-state svg { width: 44px; height: 44px; stroke: #CCCCCC; display: block; margin: 0 auto 16px; }
+.empty-state h3 { font-family: Georgia, serif; font-size: 16px; font-weight: normal; color: var(--dark); margin-bottom: 8px; }
+.empty-state p  { font-size: 14px; color: var(--gray); line-height: 1.55; max-width: 360px; margin: 0 auto; }
+.coming-soon-note { font-size: 12px; color: #BBBBBB; text-align: center; padding-bottom: 4px; }
+
+/* ── HISTORY ─────────────────────────────────────── */
+.hist-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.btn-hist-refresh { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; color: var(--gray); cursor: pointer; }
+.btn-hist-refresh:hover { border-color: var(--teal); color: var(--teal); }
+
+.client-folder { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.cf-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: white; cursor: pointer; user-select: none; transition: background 0.15s; }
+.cf-header:hover { background: var(--teal-light); }
+.cf-info { display: flex; align-items: center; gap: 12px; }
+.cf-initial { width: 36px; height: 36px; background: var(--teal-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-size: 16px; color: var(--teal); font-weight: bold; flex-shrink: 0; }
+.cf-name { font-family: Georgia, serif; font-size: 15px; font-weight: bold; color: var(--dark); }
+.cf-count { font-size: 12px; color: var(--gray); margin-left: 8px; }
+.cf-chevron { color: var(--gray); font-size: 11px; transition: transform 0.2s; display: inline-block; }
+.cf-header.collapsed .cf-chevron { transform: rotate(-90deg); }
+.cf-header.collapsed + .cf-body { display: none; }
+.cf-body { border-top: 1px solid var(--border); }
+
+.cr-item { border-bottom: 1px solid #F0F0F0; }
+.cr-item:last-child { border-bottom: none; }
+.cr-item-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
+.cr-item-info { flex: 1; min-width: 0; }
+.cr-seance-line { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; }
+.cr-seance { font-weight: 700; font-size: 13px; color: var(--teal); }
+.cr-sep { color: #CCC; font-size: 11px; }
+.cr-date { font-size: 13px; color: var(--dark); }
+.cr-motif { font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cr-item-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.btn-cr-voir, .btn-cr-dl, .btn-cr-del { font-family: inherit; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 5px; cursor: pointer; border: 1.5px solid; white-space: nowrap; line-height: 1.4; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-cr-voir { background: white; color: var(--teal); border-color: var(--teal); }
+.btn-cr-voir:hover { background: var(--teal-light); }
+.btn-cr-dl { background: var(--teal); color: white; border-color: var(--teal); }
+.btn-cr-dl:hover { background: var(--teal-dark); }
+.btn-cr-del { background: white; color: var(--plum); border-color: var(--plum); }
+.btn-cr-del:hover { background: var(--plum-light); }
+
+.cr-view-panel { background: #FAFAFA; border-top: 1px solid var(--border); padding: 14px 16px; display: none; }
+.cr-view-meta { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-bottom: 12px; font-size: 12px; color: var(--gray); }
+.cr-view-meta span strong { color: var(--dark); }
+.cr-view-text { font-family: "Courier New", monospace; font-size: 12px; line-height: 1.65; white-space: pre-wrap; color: var(--dark); margin: 0; }
+.hist-loading { text-align: center; padding: 40px; color: var(--gray); font-size: 14px; }
+.hist-no-results { text-align: center; padding: 40px 20px; font-size: 14px; color: var(--gray); }
+
+/* Sort + search controls */
+.hist-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.hist-search { flex: 1; min-width: 160px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; color: var(--dark); -webkit-appearance: none; }
+.hist-search:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(46,125,138,0.12); }
+.hist-sort-btns { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.hist-sort-label { font-size: 11.5px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; margin-right: 2px; }
+.hist-sort-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 5px; cursor: pointer; border: 1.5px solid var(--border); background: white; color: var(--gray); white-space: nowrap; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.hist-sort-btn:hover { border-color: var(--teal); color: var(--teal); }
+.hist-sort-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+/* Grouped view (name sort) */
+.cr-name-group { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+.cr-name-group-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: white; cursor: pointer; user-select: none; transition: background 0.15s; }
+.cr-name-group-header:hover { background: var(--teal-light); }
+.cr-name-group-header.collapsed .cf-chevron { transform: rotate(-90deg); }
+.cr-name-group-items { border-top: 1px solid var(--border); }
+
+/* Flat list items */
+.cr-client-name { font-weight: 700; color: var(--plum); }
+.cr-details-line { font-size: 12px; color: var(--gray); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+@media (max-width: 600px) {
+  .cr-item-row { flex-wrap: wrap; gap: 8px; }
+  .cr-item-actions { gap: 4px; }
+  .btn-cr-voir, .btn-cr-dl, .btn-cr-del { font-size: 11px; padding: 4px 8px; }
+  .hist-controls { gap: 8px; }
+  .hist-sort-btn { font-size: 11.5px; padding: 4px 9px; }
+}
+
+/* ── SETTINGS ────────────────────────────────────── */
+.settings-note { font-size: 12.5px; color: var(--gray); line-height: 1.55; margin-top: 10px; padding: 10px 14px; background: #FFF8E7; border-left: 3px solid #F0B429; border-radius: 0 4px 4px 0; }
+#promptTextarea { font-family: "Courier New", monospace; font-size: 12.5px; line-height: 1.65; min-height: 380px; }
+.confirm-msg { font-size: 13px; min-height: 18px; margin-top: 10px; }
+
+/* ── FOOTER ──────────────────────────────────────── */
+.site-footer { border-top: 1px solid var(--border); background: white; padding: 14px 24px; text-align: center; font-size: 12px; color: #AAAAAA; line-height: 1.8; }
+.site-footer a { color: #AAAAAA; text-decoration: none; }
+.site-footer a:hover { color: var(--teal); }
+.footer-sep { margin: 0 7px; }
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 600px) {
+  .page { padding: 14px 14px 60px; }
+  .card { padding: 16px; }
+  .tab  { padding: 12px 12px; font-size: 13px; }
+  .brand-sub { display: none; }
+  .btn  { width: 100%; text-align: center; }
+  .btn-row { flex-direction: column; }
+  .form-row { grid-template-columns: 1fr; }
+  .slot-meta-row { grid-template-columns: 1fr; }
+  .sz-hint { display: none; }
+  .transcribe-row { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Générateur de compte-rendu de séance</h1>
-  <p>Sophrologie caycédienne · Vanessa Slous · sophroslous.fr</p>
+<!-- ═══════════════════ HEADER ══════════════════════ -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">SC</div>
+      <div>
+        <div class="brand-name">SophroCR</div>
+        <div class="brand-sub">Sophrologie caycédienne</div>
+      </div>
+    </div>
+    <a class="header-link" href="https://sophroslous.fr" target="_blank" rel="noopener" style="text-align:center;">sophroslous.fr</a>
+    <div class="header-right">
+      <a class="header-link" href="/logout" style="opacity:0.6; font-size:12px;">Déconnexion</a>
+    </div>
+  </div>
 </header>
 
-<main>
+<!-- ═══════════════════ TAB BAR ═════════════════════ -->
+<nav class="tab-bar">
+  <div class="tabs">
+    <button class="tab active" data-tab="generer">Générer</button>
+    <button class="tab" data-tab="historique">Historique</button>
+    <button class="tab" data-tab="parametres">Paramètres</button>
+  </div>
+</nav>
 
-  <section>
-    <h2>1. Métadonnées de la séance</h2>
-    <div class="row">
-      <div>
-        <label for="client">Prénom du client *</label>
-        <input type="text" id="client" placeholder="ex. Yannick">
+<!-- ═══════════════ TAB : GÉNÉRER ══════════════════ -->
+<div id="tab-generer" class="tab-content active">
+  <div class="page">
+
+    <!-- Métadonnées -->
+    <div class="card">
+      <div class="card-title">Métadonnées de la séance</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="client">Prénom du client <span class="req">*</span></label>
+          <input type="text" id="client" placeholder="ex. Yannick" autocomplete="off" list="clientsList">
+          <datalist id="clientsList"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="date">Date <span class="req">*</span></label>
+          <input type="text" id="date" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="seance">Séance n° <span class="req">*</span></label>
+          <input type="text" id="seance" placeholder="ex. 2" autocomplete="off">
+        </div>
       </div>
-      <div>
-        <label for="date">Date *</label>
-        <input type="text" id="date" placeholder="ex. 17 juin 2026">
+      <div class="form-group">
+        <label for="motif">Motif de suivi <span class="req">*</span></label>
+        <input type="text" id="motif" placeholder="ex. Gestion de la charge mentale" autocomplete="off">
       </div>
-      <div>
-        <label for="seance">Séance n° *</label>
-        <input type="text" id="seance" placeholder="ex. 2">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="techniques">Technique(s) <span class="req">*</span></label>
+          <input type="text" id="techniques" placeholder="ex. SBVc + SDNc + SAVa" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="phase">Phase du protocole</label>
+          <input type="text" id="phase" placeholder="ex. Installation des 3TC" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="notes">Notes personnelles</label>
+        <textarea id="notes" rows="2" placeholder="Observations, verbatim importants, points d'attention…"></textarea>
       </div>
     </div>
-    <label for="motif">Motif de suivi *</label>
-    <input type="text" id="motif" placeholder="ex. Gestion de la charge mentale">
-    <div class="row">
-      <div>
-        <label for="techniques">Technique(s) *</label>
-        <input type="text" id="techniques" placeholder="ex. SBVc + SDNc + SAVa">
+
+    <!-- Transcription -->
+    <div class="card">
+      <div class="card-title">Transcription de la séance</div>
+
+      <!-- Multi-slot audio upload -->
+      <div id="audioSlots"></div>
+
+      <button id="addAudioBtn" class="btn-add-audio">+ Ajouter un audio</button>
+
+      <div class="transcribe-row">
+        <button class="btn btn-primary" id="transcribeAllBtn" disabled>Transcrire</button>
+        <span class="transcribe-status" id="transcribeStatus"></span>
       </div>
-      <div>
-        <label for="phase">Phase du protocole (optionnel)</label>
-        <input type="text" id="phase" placeholder="ex. Installation des 3TC">
+
+      <div class="or-divider">ou saisissez manuellement</div>
+
+      <div class="form-group">
+        <label for="transcription">Texte de la transcription</label>
+        <textarea id="transcription" rows="12"
+          placeholder="Collez la transcription ici (Dictaphone iOS, Turboscribe, ou autre).&#10;&#10;Si possible, indiquez les locuteurs :&#10;Sophrologue : …&#10;Client : …"></textarea>
       </div>
     </div>
-    <label for="notes">Notes personnelles (optionnel)</label>
-    <textarea id="notes" rows="2" placeholder="Observations, verbatim importants..."></textarea>
-  </section>
 
-  <section>
-    <h2>2. Transcription de la séance</h2>
-    <p style="font-size:13px; color:var(--gray); margin-top:0;">
-      Collez ici la transcription (Dictaphone iOS, Turboscribe, ou autre).
-      Si possible, indiquez qui parle (ex. "Sophrologue : ..." / "Client : ...").
-    </p>
-    <textarea id="transcription" rows="14" placeholder="Collez la transcription complète ici..."></textarea>
-  </section>
+    <button class="btn btn-primary" id="generateBtn">Générer le compte-rendu</button>
 
-  <button id="generateBtn">Générer le compte-rendu</button>
-  <div id="status"></div>
+    <div class="status" id="status">
+      <div class="spinner" id="spinner"></div>
+      <span id="statusText"></span>
+    </div>
 
-  <section id="previewSection">
-    <h2>3. Compte-rendu généré (relecture)</h2>
-    <p style="font-size:13px; color:var(--gray); margin-top:0;">
-      Vous pouvez corriger le texte directement ci-dessous avant de télécharger le Word.
-    </p>
-    <textarea id="crPreview" rows="20"></textarea>
-    <button id="downloadBtn">Télécharger le Word</button>
-    <button id="regenerateBtn" class="secondary">Régénérer</button>
-  </section>
+    <!-- CR Preview -->
+    <div id="previewSection" class="card">
+      <div class="card-title">Compte-rendu généré</div>
 
-</main>
+      <div class="preview-mode-tabs">
+        <button class="pmt-btn active" id="pmtText">Texte</button>
+        <button class="pmt-btn"        id="pmtWord">Aperçu Word</button>
+      </div>
+
+      <!-- Mode texte -->
+      <div id="previewTextMode">
+        <p style="font-size:13px; color:var(--gray); margin-bottom:12px; line-height:1.5;">
+          Relisez et corrigez le texte ci-dessous avant de télécharger le Word.
+        </p>
+        <textarea id="crPreview" rows="22"></textarea>
+      </div>
+
+      <!-- Mode aperçu -->
+      <div id="previewWordMode" style="display:none">
+        <div class="wp-outer">
+          <div class="wp-page" id="wpContent"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary"   id="downloadBtn">Télécharger le Word</button>
+        <button class="btn btn-secondary" id="copyTextBtn">Copier le texte</button>
+        <button class="btn btn-secondary" id="regenerateBtn">Régénérer</button>
+      </div>
+      <p id="iosNotice" style="display:none; font-size:12.5px; color:var(--gray); margin-top:12px; line-height:1.6; padding:10px 12px; background:#FFF8E7; border-left:3px solid #F0B429; border-radius:0 4px 4px 0;">
+        Sur iPhone · iPad : si le fichier ne s'est pas téléchargé, utilisez <strong>Copier le texte</strong>
+        puis collez dans Pages, Word ou Notes. Vous pouvez aussi ouvrir ce lien depuis un Mac.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ TAB : HISTORIQUE ═══════════════ -->
+<div id="tab-historique" class="tab-content">
+  <div class="page">
+    <div class="card">
+      <div class="hist-title-row">
+        <div class="card-title" style="border:none;padding:0;margin:0;">Historique des comptes-rendus</div>
+        <button class="btn-hist-refresh" id="histRefreshBtn">↺ Rafraîchir</button>
+      </div>
+
+      <!-- Sort + search (hidden until séances are loaded) -->
+      <div class="hist-controls" id="histControls" style="display:none">
+        <input type="text" id="histSearch" class="hist-search"
+          placeholder="Rechercher un client, motif, technique…" autocomplete="off">
+        <div class="hist-sort-btns">
+          <span class="hist-sort-label">Trier :</span>
+          <button class="hist-sort-btn active" data-sort="date"       data-label="Date">Date ↓</button>
+          <button class="hist-sort-btn"        data-sort="name"       data-label="Nom">Nom</button>
+          <button class="hist-sort-btn"        data-sort="motif"      data-label="Motif">Motif</button>
+          <button class="hist-sort-btn"        data-sort="techniques" data-label="Techniques">Techniques</button>
+        </div>
+      </div>
+
+      <div id="histContainer">
+        <div class="hist-loading">Chargement…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB : PARAMÈTRES ═══════════════ -->
+<div id="tab-parametres" class="tab-content">
+  <div class="page">
+    <div class="card">
+      <div class="card-title">Prompt système — Claude</div>
+      <p style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.55;">
+        Ce texte est envoyé à Claude avant chaque génération. Il définit les règles de rédaction,
+        la structure obligatoire du CR et le ton caycédien. La référence caycédienne (vocabulaire,
+        techniques, protocoles) est un document séparé et ne peut pas être modifiée ici.
+      </p>
+      <div class="form-group">
+        <label for="promptTextarea">Prompt actuel</label>
+        <textarea id="promptTextarea" rows="22" spellcheck="false"></textarea>
+      </div>
+      <div class="settings-note">
+        ⚠ Toute modification prend effet immédiatement sur les prochaines générations.
+        Le bouton « Réinitialiser » restaure le prompt d'origine après confirmation.
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="savePromptBtn">Enregistrer</button>
+        <button class="btn btn-danger"  id="resetPromptBtn">Réinitialiser</button>
+      </div>
+      <div class="confirm-msg" id="promptConfirm"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FOOTER ══════════════════════ -->
+<footer class="site-footer">
+  Vanessa Slous · Sophrologue caycédienne
+  <span class="footer-sep">·</span>
+  <a href="https://sophroslous.fr" target="_blank" rel="noopener">sophroslous.fr</a>
+  <span class="footer-sep">·</span>
+  <a href="/rgpd.html">Confidentialité &amp; RGPD</a>
+</footer>
 
 <script>
+// ── UTILS ──────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtBytes(b) {
+  return b < 1024 * 1024 ? (b / 1024).toFixed(0) + ' Ko' : (b / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+// ── TABS ───────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    $('tab-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'parametres') loadPrompt();
+    if (tab.dataset.tab === 'historique') loadHistory();
+  });
+});
+
+// ── DATE AUTO-FORMAT ───────────────────────────────
+$('date').addEventListener('input', function () {
+  let v = this.value.replace(/\D/g, '');
+  if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+  if (v.length > 5) v = v.slice(0, 5) + '/' + v.slice(5, 9);
+  this.value = v;
+});
+(function () {
+  const d = new Date();
+  $('date').value = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+})();
+
+const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function parseDateFR(raw) {
+  const p = raw.split('/');
+  if (p.length !== 3) return raw;
+  const m = parseInt(p[1], 10) - 1;
+  return (!isNaN(m) && MONTHS[m]) ? `${parseInt(p[0],10)} ${MONTHS[m]} ${p[2]}` : raw;
+}
 function getMeta() {
   return {
-    client: $('client').value.trim(),
-    date: $('date').value.trim(),
-    seance: $('seance').value.trim(),
-    motif: $('motif').value.trim(),
+    client:     $('client').value.trim(),
+    date:       parseDateFR($('date').value.trim()),
+    seance:     $('seance').value.trim(),
+    motif:      $('motif').value.trim(),
     techniques: $('techniques').value.trim(),
-    phase: $('phase').value.trim(),
-    notes: $('notes').value.trim(),
+    phase:      $('phase').value.trim(),
+    notes:      $('notes').value.trim(),
   };
 }
-
 function setStatus(msg, type) {
-  const el = $('status');
-  el.textContent = msg;
-  el.className = type || '';
+  $('statusText').textContent = msg;
+  $('status').className = 'status ' + (type || '');
+  $('spinner').className = 'spinner' + (type === 'loading' ? ' on' : '');
 }
 
+// ══════════════════════════════════════════════════
+//  CLIENT AUTOCOMPLETE
+// ══════════════════════════════════════════════════
+let clientsCache      = [];
+let lastAutoFillName  = null; // prevents re-triggering after manual edits
+
+async function loadClients() {
+  try {
+    const res  = await fetch('/api/clients');
+    const data = await res.json();
+    clientsCache = data.clients || [];
+    const dl = $('clientsList');
+    dl.innerHTML = clientsCache.map(c => `<option value="${escHtml(c.name)}">`).join('');
+  } catch {}
+}
+
+$('client').addEventListener('input', function () {
+  const val   = this.value.trim();
+  const match = clientsCache.find(c => c.name.toLowerCase() === val.toLowerCase());
+
+  if (!match || match.name === lastAutoFillName) return;
+  lastAutoFillName = match.name;
+
+  // Auto-increment séance
+  const next = !isNaN(parseInt(match.seance, 10)) ? String(parseInt(match.seance, 10) + 1) : '';
+  if (next) $('seance').value = next;
+
+  // Pre-fill motif with last séance's motif (editable)
+  if (match.motif) $('motif').value = match.motif;
+});
+
+// Reset auto-fill tracking when client field is cleared
+$('client').addEventListener('change', function () {
+  if (!this.value.trim()) lastAutoFillName = null;
+});
+
+loadClients();
+
+// ══════════════════════════════════════════════════
+//  AUDIO SLOTS
+// ══════════════════════════════════════════════════
+const MAX_SLOTS = 3;
+let slots      = [];
+let nextSlotId = 0;
+
+function getSlot(id) { return slots.find(s => s.id === id); }
+
+// ── Slot HTML (rendered into #audioSlots) ─────────
+function slotHTML(slot, index) {
+  const canRemove = slots.length > 1;
+  return `
+<div class="audio-slot" data-slot-id="${slot.id}">
+
+  <div class="slot-header">
+    <span class="slot-num">Audio ${index}</span>
+    <button class="slot-remove-btn" ${canRemove ? '' : 'disabled'} title="Retirer">×</button>
+  </div>
+
+  <div class="slot-meta-row">
+    <div>
+      <span class="slot-meta-label">Nom / label</span>
+      <input type="text" class="slot-label-input"
+        placeholder="ex. Échange pré-sophronique"
+        value="${escHtml(slot.label)}">
+    </div>
+    <div>
+      <span class="slot-meta-label">Description pour Claude</span>
+      <input type="text" class="slot-desc-input"
+        placeholder="ex. Discussion avant la pratique sophrologique"
+        value="${escHtml(slot.description)}">
+    </div>
+  </div>
+
+  <div class="slot-zone" data-state="${slot.state}">
+
+    <!-- IDLE -->
+    <div class="sz-idle">
+      <label class="sz-idle-label">
+        <input type="file" class="slot-file-input" accept=".m4a,.mp3,.wav,.mp4,audio/*,video/mp4" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <span class="sz-idle-text">Déposer un fichier ici ou <span class="sz-pick-text">sélectionner</span></span>
+      </label>
+      <span class="sz-hint">m4a · mp3 · wav · mp4</span>
+    </div>
+
+    <!-- SELECTED -->
+    <div class="sz-selected">
+      <span class="sz-mic">🎙</span>
+      <span class="sz-file-name">${escHtml(slot.file?.name || '')}</span>
+      <span class="sz-file-size">${slot.file ? fmtBytes(slot.file.size) : ''}</span>
+      <button class="sz-clear-btn" title="Retirer le fichier">×</button>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="sz-processing">
+      <div class="sz-proc-row">
+        <div class="spinner on"></div>
+        <span class="sz-proc-msg">En attente…</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+
+    <!-- DONE -->
+    <div class="sz-done">
+      <span class="sz-done-check">✓</span>
+      <span class="sz-done-label">Terminée</span>
+      <button class="sz-redo-btn">Changer</button>
+    </div>
+  </div>
+
+  <div class="slot-error"></div>
+</div>`;
+}
+
+// ── Render ─────────────────────────────────────────
+function renderSlots() {
+  $('audioSlots').innerHTML = slots.map((s, i) => slotHTML(s, i + 1)).join('');
+  attachDragDrop();
+  updateButtons();
+}
+
+function updateButtons() {
+  const hasSelected   = slots.some(s => s.state === 'selected');
+  const hasProcessing = slots.some(s => s.state === 'processing');
+  $('transcribeAllBtn').disabled = !hasSelected || hasProcessing;
+  $('addAudioBtn').disabled      = slots.length >= MAX_SLOTS || hasProcessing;
+  $('addAudioBtn').textContent   = `+ Ajouter un audio (${slots.length}/${MAX_SLOTS})`;
+}
+
+// ── Slot state helpers ─────────────────────────────
+function setSlotState(id, state) {
+  const slot = getSlot(id);
+  if (slot) slot.state = state;
+  const zoneEl = document.querySelector(`[data-slot-id="${id}"] .slot-zone`);
+  if (zoneEl) zoneEl.dataset.state = state;
+  updateButtons();
+}
+
+function setSlotMsg(id, msg) {
+  const el = document.querySelector(`[data-slot-id="${id}"] .sz-proc-msg`);
+  if (el) el.textContent = msg;
+}
+
+function showSlotError(id, msg, withManualLink) {
+  const el = document.querySelector(`[data-slot-id="${id}"] .slot-error`);
+  if (el) {
+    el.innerHTML = escHtml(msg) + (withManualLink
+      ? '<br><a href="#" class="slot-manual-link">→ Saisir la transcription manuellement</a>'
+      : '');
+    el.classList.add('visible');
+  }
+}
+function hideSlotError(id) {
+  const el = document.querySelector(`[data-slot-id="${id}"] .slot-error`);
+  if (el) { el.innerHTML = ''; el.classList.remove('visible'); }
+}
+
+function setSlotFile(id, file) {
+  const slot = getSlot(id);
+  if (!slot) return;
+  hideSlotError(id);
+  if (!['m4a','mp3','wav','mp4'].includes(file.name.split('.').pop().toLowerCase())) {
+    showSlotError(id, 'Format non reconnu. Formats acceptés : m4a, mp3, wav, mp4.');
+    return;
+  }
+  if (file.size > 500 * 1024 * 1024) {
+    showSlotError(id, 'Ce fichier est trop volumineux. Taille maximum : 500 Mo.');
+    return;
+  }
+  slot.file = file;
+  // Update DOM without full re-render
+  const nameEl = document.querySelector(`[data-slot-id="${id}"] .sz-file-name`);
+  const sizeEl = document.querySelector(`[data-slot-id="${id}"] .sz-file-size`);
+  if (nameEl) nameEl.textContent = file.name;
+  if (sizeEl) sizeEl.textContent = fmtBytes(file.size);
+  setSlotState(id, 'selected');
+}
+
+function clearSlotFile(id) {
+  const slot = getSlot(id);
+  if (!slot) return;
+  slot.file = null; slot.transcriptId = null; slot.transcript = null;
+  hideSlotError(id);
+  setSlotState(id, 'idle');
+}
+
+function saveMeta() {
+  slots.forEach(s => {
+    const labelEl = document.querySelector(`[data-slot-id="${s.id}"] .slot-label-input`);
+    const descEl  = document.querySelector(`[data-slot-id="${s.id}"] .slot-desc-input`);
+    if (labelEl) s.label = labelEl.value;
+    if (descEl)  s.description = descEl.value;
+  });
+}
+
+// ── Add / remove slots ─────────────────────────────
+function addSlot() {
+  if (slots.length >= MAX_SLOTS) return;
+  slots.push({ id: nextSlotId++, file: null, label: '', description: '', transcriptId: null, transcript: null, state: 'idle' });
+  renderSlots();
+}
+
+function removeSlot(id) {
+  if (slots.length <= 1) return;
+  saveMeta();
+  slots = slots.filter(s => s.id !== id);
+  renderSlots();
+}
+
+function redoSlot(id) {
+  const slot = getSlot(id);
+  if (!slot) return;
+  slot.file = null; slot.transcriptId = null; slot.transcript = null;
+  setSlotState(id, 'idle');
+  hideSlotError(id);
+}
+
+// ── Drag & drop (re-attached after each render) ────
+function attachDragDrop() {
+  document.querySelectorAll('.slot-zone').forEach(zone => {
+    const slotId = parseInt(zone.closest('[data-slot-id]').dataset.slotId);
+    zone.addEventListener('dragover',  e  => { e.preventDefault(); if (zone.dataset.state === 'idle') zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      if (zone.dataset.state !== 'idle') return;
+      const f = e.dataTransfer.files[0]; if (f) setSlotFile(slotId, f);
+    });
+  });
+}
+
+// ── Event delegation on slot container ────────────
+$('audioSlots').addEventListener('click', e => {
+  if (e.target.classList.contains('slot-manual-link')) {
+    e.preventDefault();
+    $('transcription').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => $('transcription').focus(), 350);
+    return;
+  }
+
+  const slotEl = e.target.closest('[data-slot-id]');
+  if (!slotEl) return;
+  const id = parseInt(slotEl.dataset.slotId);
+
+  if (e.target.closest('.slot-remove-btn')) { removeSlot(id); return; }
+  if (e.target.closest('.sz-clear-btn'))    { clearSlotFile(id); return; }
+  if (e.target.closest('.sz-redo-btn'))     { redoSlot(id); return; }
+
+  // Clicking the idle label triggers file input (handled by <label for>)
+  // But we also need to wire the hidden file input to our handler
+});
+
+$('audioSlots').addEventListener('change', e => {
+  if (!e.target.classList.contains('slot-file-input')) return;
+  const slotEl = e.target.closest('[data-slot-id]');
+  if (!slotEl) return;
+  const id   = parseInt(slotEl.dataset.slotId);
+  const file = e.target.files[0];
+  if (file) setSlotFile(id, file);
+  e.target.value = ''; // allow re-selecting same file
+});
+
+// Label / description changes update slot in real time (no re-render needed)
+$('audioSlots').addEventListener('input', e => {
+  const slotEl = e.target.closest('[data-slot-id]');
+  if (!slotEl) return;
+  const id   = parseInt(slotEl.dataset.slotId);
+  const slot = getSlot(id);
+  if (!slot) return;
+  if (e.target.classList.contains('slot-label-input')) slot.label = e.target.value;
+  if (e.target.classList.contains('slot-desc-input'))  slot.description = e.target.value;
+});
+
+$('addAudioBtn').addEventListener('click', addSlot);
+
+// ── Transcription ──────────────────────────────────
+async function processSlot(id) {
+  const slot = getSlot(id);
+  if (!slot?.file) return;
+  hideSlotError(id);
+  setSlotState(id, 'processing');
+  setSlotMsg(id, "Envoi de l'audio…");
+
+  try {
+    const form = new FormData();
+    form.append('audio', slot.file);
+    const res  = await fetch('/api/transcribe', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showSlotError(id, data.error || "Le service de transcription est indisponible. Vous pouvez coller la transcription manuellement pour continuer.", true);
+      setSlotState(id, 'selected'); return;
+    }
+    slot.transcriptId = data.transcript_id;
+    setSlotMsg(id, 'Transcription en cours…');
+    await pollSlot(id);
+
+  } catch {
+    showSlotError(id, 'Connexion perdue. Vérifiez votre connexion, ou collez la transcription manuellement.', true);
+    setSlotState(id, 'selected');
+  }
+}
+
+function pollSlot(id) {
+  return new Promise(resolve => {
+    const check = async () => {
+      const slot = getSlot(id);
+      if (!slot?.transcriptId) { resolve(); return; }
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const res  = await fetch(`/api/transcribe/${slot.transcriptId}`);
+        const data = await res.json();
+        if (data.status === 'completed') {
+          slot.transcript = data.transcript;
+          setSlotState(id, 'done');
+          resolve();
+        } else if (data.status === 'error') {
+          showSlotError(id, data.error || 'La transcription a échoué. Vérifiez la qualité audio et réessayez, ou collez la transcription manuellement.', true);
+          setSlotState(id, 'selected');
+          resolve();
+        } else {
+          check();
+        }
+      } catch {
+        showSlotError(id, 'Connexion perdue pendant la transcription. Réessayez ou collez la transcription manuellement.', true);
+        setSlotState(id, 'selected');
+        resolve();
+      }
+    };
+    check();
+  });
+}
+
+function combineTranscripts() {
+  const done = slots.filter(s => s.state === 'done' && s.transcript);
+  if (done.length === 0) return '';
+
+  // Single audio with no label/description: plain transcript
+  if (done.length === 1 && !done[0].label.trim() && !done[0].description.trim()) {
+    return done[0].transcript;
+  }
+
+  return done.map((s, i) => {
+    const header = s.label.trim() || `Audio ${i + 1}`;
+    const lines  = [`=== ${header} ===`];
+    if (s.description.trim()) lines.push(`Description : ${s.description.trim()}`);
+    lines.push(s.transcript);
+    return lines.join('\n');
+  }).join('\n\n');
+}
+
+async function transcribeAll() {
+  saveMeta();
+  const toProcess = slots.filter(s => s.state === 'selected');
+  if (toProcess.length === 0) return;
+
+  $('transcribeAllBtn').disabled = true;
+  $('transcribeStatus').textContent = toProcess.length > 1
+    ? `Traitement de ${toProcess.length} audios en parallèle…`
+    : '';
+
+  await Promise.all(toProcess.map(s => processSlot(s.id)));
+
+  const combined = combineTranscripts();
+  if (combined) {
+    $('transcription').value = combined;
+    $('transcription').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  $('transcribeStatus').textContent = '';
+  updateButtons();
+}
+
+$('transcribeAllBtn').addEventListener('click', transcribeAll);
+
+// ── Initialize first slot ──────────────────────────
+addSlot();
+
+// ══════════════════════════════════════════════════
+//  GENERATE / DOWNLOAD
+// ══════════════════════════════════════════════════
 async function generate() {
   const meta = getMeta();
   const transcription = $('transcription').value.trim();
 
-  if (!meta.client || !meta.date || !meta.seance || !meta.motif || !meta.techniques) {
-    setStatus('Merci de remplir tous les champs obligatoires (*).', 'error');
-    return;
+  if (!meta.client || !$('date').value.trim() || !meta.seance || !meta.motif || !meta.techniques) {
+    setStatus('Merci de remplir tous les champs obligatoires (*).', 'error'); return;
   }
   if (!transcription) {
-    setStatus('La transcription est vide. Collez le texte de la séance.', 'error');
-    return;
+    setStatus('La transcription est vide. Collez le texte ou uploadez un fichier audio.', 'error'); return;
   }
 
   $('generateBtn').disabled = true;
-  setStatus('Génération en cours… (quelques secondes)', '');
+  setStatus('Génération en cours… (quelques secondes)', 'loading');
 
   try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res  = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...meta, transcription })
     });
     const data = await res.json();
-
-    if (!res.ok) {
-      setStatus(data.error || 'Une erreur est survenue.', 'error');
-      $('generateBtn').disabled = false;
-      return;
-    }
+    if (!res.ok) { setStatus(data.error || 'Une erreur est survenue.', 'error'); return; }
 
     $('crPreview').value = data.cr;
     $('previewSection').style.display = 'block';
-    setStatus('Compte-rendu généré. Relisez-le avant de télécharger.', 'ok');
-    $('previewSection').scrollIntoView({ behavior: 'smooth' });
+    setStatus('Compte-rendu généré. Relisez avant de télécharger.', 'ok');
+    $('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  } catch (err) {
+  } catch {
     setStatus('Connexion perdue. Vérifiez votre connexion et réessayez.', 'error');
   } finally {
     $('generateBtn').disabled = false;
+    $('spinner').className = 'spinner';
   }
 }
 
 async function download() {
   const meta = getMeta();
-  const cr = $('crPreview').value;
+  const cr   = $('crPreview').value;
+  if (!cr.trim()) { setStatus('Aucun texte à mettre en forme.', 'error'); return; }
 
-  if (!cr.trim()) {
-    setStatus('Aucun texte à mettre en forme.', 'error');
-    return;
-  }
-
-  setStatus('Préparation du fichier Word…', '');
-
+  setStatus('Préparation du fichier Word…', 'loading');
   try {
     const res = await fetch('/api/download', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...meta, cr })
     });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setStatus(data.error || 'Le téléchargement a échoué.', 'error');
-      return;
-    }
-
+    if (!res.ok) { const d = await res.json().catch(() => ({})); setStatus(d.error || 'Le téléchargement a échoué.', 'error'); return; }
     const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CR_${meta.client || 'client'}_S${meta.seance || ''}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `CR_${meta.client || 'client'}_S${meta.seance || ''}.docx`;
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     setStatus('Fichier Word téléchargé.', 'ok');
-
-  } catch (err) {
+    loadClients(); // refresh autocomplete with any newly saved client
+  } catch {
     setStatus('Connexion perdue. Vérifiez votre connexion et réessayez.', 'error');
+  } finally {
+    $('spinner').className = 'spinner';
   }
 }
 
 $('generateBtn').addEventListener('click', generate);
 $('regenerateBtn').addEventListener('click', generate);
 $('downloadBtn').addEventListener('click', download);
+
+$('copyTextBtn').addEventListener('click', async () => {
+  const text = $('crPreview').value;
+  if (!text.trim()) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus('Texte copié dans le presse-papiers.', 'ok');
+  } catch {
+    $('crPreview').select();
+    setStatus('Texte sélectionné — copiez avec Cmd+C ou Ctrl+C.', 'ok');
+  }
+});
+
+// Affiche le message de repli sur iPhone/iPad dès le chargement
+if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+  $('iosNotice').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORIQUE
+// ══════════════════════════════════════════════════
+let histAllSeances = [];
+let histSortKey    = 'date';
+let histSortDir    = -1; // -1 = desc (newest first for date, Z→A for text), +1 = asc
+
+// ── Build & render filtered+sorted list ───────────
+function applyAndRender() {
+  const q = ($('histSearch')?.value || '').trim().toLowerCase();
+
+  let visible = q
+    ? histAllSeances.filter(s =>
+        [s.client, s.date, s.motif, s.techniques].some(v => (v || '').toLowerCase().includes(q))
+      )
+    : [...histAllSeances];
+
+  visible.sort((a, b) => {
+    let cmp = 0;
+    if      (histSortKey === 'date')       cmp = new Date(a.savedAt) - new Date(b.savedAt);
+    else if (histSortKey === 'name')       { cmp = (a.client || '').localeCompare(b.client || '', 'fr'); if (!cmp) cmp = new Date(b.savedAt) - new Date(a.savedAt); }
+    else if (histSortKey === 'motif')      cmp = (a.motif || '').localeCompare(b.motif || '', 'fr');
+    else if (histSortKey === 'techniques') cmp = (a.techniques || '').localeCompare(b.techniques || '', 'fr');
+    return cmp * histSortDir;
+  });
+
+  renderSeances(visible);
+}
+
+// ── Single séance row HTML ─────────────────────────
+function crItemHTML(s, showClient) {
+  const details = [s.motif, s.techniques].filter(Boolean).map(v => escHtml(v)).join('<span class="cr-sep"> · </span>');
+  return `
+    <div class="cr-item" data-folder="${escHtml(s.folder)}" data-id="${escHtml(s.id)}">
+      <div class="cr-item-row">
+        <div class="cr-item-info">
+          <div class="cr-seance-line">
+            ${showClient ? `<span class="cr-client-name">${escHtml(s.client)}</span><span class="cr-sep">·</span>` : ''}
+            <span class="cr-seance">Séance ${escHtml(s.seance || '?')}</span>
+            <span class="cr-sep">·</span>
+            <span class="cr-date">${escHtml(s.date || '')}</span>
+          </div>
+          ${details ? `<div class="cr-details-line">${details}</div>` : ''}
+        </div>
+        <div class="cr-item-actions">
+          <button class="btn-cr-voir">Voir</button>
+          <a class="btn-cr-dl" href="/api/history/${encodeURIComponent(s.folder)}/${encodeURIComponent(s.id)}/download" download>↓ Word</a>
+          <button class="btn-cr-del">Supprimer</button>
+        </div>
+      </div>
+      <div class="cr-view-panel"></div>
+    </div>`;
+}
+
+// ── Render ─────────────────────────────────────────
+function renderSeances(seances) {
+  const container = $('histContainer');
+
+  if (histAllSeances.length === 0) {
+    $('histControls').style.display = 'none';
+    container.innerHTML = `
+      <div style="text-align:center;padding:56px 20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          style="width:44px;height:44px;stroke:#CCC;display:block;margin:0 auto 16px">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <h3 style="font-family:Georgia,serif;font-size:16px;font-weight:normal;color:var(--dark);margin-bottom:8px;">Aucun compte-rendu pour l'instant</h3>
+        <p style="font-size:14px;color:var(--gray);line-height:1.55;max-width:340px;margin:0 auto;">
+          Générez et téléchargez un CR depuis l'onglet Générer : il apparaîtra ici automatiquement.
+        </p>
+      </div>`;
+    return;
+  }
+
+  $('histControls').style.display = 'flex';
+
+  if (seances.length === 0) {
+    container.innerHTML = `<div class="hist-no-results">Aucun résultat pour « ${escHtml($('histSearch').value.trim())} ».</div>`;
+    return;
+  }
+
+  // Grouped by client when sorted by name; flat list otherwise
+  if (histSortKey === 'name') {
+    const groups = new Map();
+    for (const s of seances) {
+      if (!groups.has(s.folder)) groups.set(s.folder, { name: s.client, items: [] });
+      groups.get(s.folder).items.push(s);
+    }
+    container.innerHTML = [...groups.values()].map(g => `
+      <div class="cr-name-group">
+        <div class="cr-name-group-header">
+          <div class="cf-info">
+            <div class="cf-initial">${escHtml(g.name.charAt(0).toUpperCase())}</div>
+            <div>
+              <span class="cf-name">${escHtml(g.name)}</span>
+              <span class="cf-count">${g.items.length} séance${g.items.length > 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <span class="cf-chevron">▼</span>
+        </div>
+        <div class="cr-name-group-items">
+          ${g.items.map(s => crItemHTML(s, false)).join('')}
+        </div>
+      </div>`).join('');
+  } else {
+    container.innerHTML = seances.map(s => crItemHTML(s, true)).join('');
+  }
+}
+
+// ── Load from server ───────────────────────────────
+async function loadHistory() {
+  $('histControls').style.display = 'none';
+  $('histContainer').innerHTML = '<div class="hist-loading">Chargement…</div>';
+  try {
+    const res  = await fetch('/api/history');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur.');
+    histAllSeances = (data.clients || []).flatMap(c => c.seances);
+    applyAndRender();
+  } catch (err) {
+    $('histContainer').innerHTML = `<p style="color:var(--error);font-size:13px;text-align:center;padding:30px;">${escHtml(err.message)}</p>`;
+  }
+}
+
+// ── Sort buttons ───────────────────────────────────
+document.querySelectorAll('.hist-sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.sort;
+    if (key === histSortKey) {
+      histSortDir = -histSortDir;
+    } else {
+      histSortKey = key;
+      histSortDir = key === 'date' ? -1 : 1; // date: newest first; text: A→Z
+    }
+    document.querySelectorAll('.hist-sort-btn').forEach(b => {
+      b.classList.remove('active');
+      b.textContent = b.dataset.label;
+    });
+    btn.classList.add('active');
+    btn.textContent = btn.dataset.label + (histSortDir === 1 ? ' ↑' : ' ↓');
+    applyAndRender();
+  });
+});
+
+// ── Search ─────────────────────────────────────────
+$('histSearch').addEventListener('input', applyAndRender);
+
+// ── Event delegation ───────────────────────────────
+$('histContainer').addEventListener('click', async e => {
+  // Collapse group header (name sort view)
+  const groupHeader = e.target.closest('.cr-name-group-header');
+  if (groupHeader) {
+    groupHeader.classList.toggle('collapsed');
+    const items = groupHeader.nextElementSibling;
+    if (items) items.style.display = groupHeader.classList.contains('collapsed') ? 'none' : '';
+    return;
+  }
+
+  // Voir
+  if (e.target.classList.contains('btn-cr-voir')) {
+    const item   = e.target.closest('.cr-item');
+    const panel  = item.querySelector('.cr-view-panel');
+    const isOpen = e.target.dataset.open === '1';
+    if (isOpen) {
+      panel.style.display   = 'none';
+      e.target.dataset.open = '';
+      e.target.textContent  = 'Voir';
+      return;
+    }
+    e.target.dataset.open = '1';
+    e.target.textContent  = 'Masquer';
+    panel.style.display   = 'block';
+    if (panel.dataset.loaded) return;
+    const folder = item.dataset.folder, id = item.dataset.id;
+    panel.innerHTML = '<div style="padding:8px;color:var(--gray);font-size:12px;">Chargement…</div>';
+    try {
+      const res  = await fetch(`/api/history/${encodeURIComponent(folder)}/${encodeURIComponent(id)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      panel.dataset.loaded = '1';
+      panel.innerHTML = `
+        <div class="cr-view-meta">
+          ${data.motif      ? `<span><strong>Motif</strong> : ${escHtml(data.motif)}</span>` : ''}
+          ${data.techniques ? `<span><strong>Techniques</strong> : ${escHtml(data.techniques)}</span>` : ''}
+          ${data.phase      ? `<span><strong>Phase</strong> : ${escHtml(data.phase)}</span>` : ''}
+          <span><strong>Sauvegardé le</strong> : ${escHtml(new Date(data.savedAt).toLocaleDateString('fr-FR'))}</span>
+        </div>
+        <pre class="cr-view-text">${escHtml(data.cr || '')}</pre>`;
+    } catch {
+      panel.innerHTML = `<p style="color:var(--error);font-size:12px;padding:8px;">Impossible de charger ce CR.</p>`;
+      e.target.dataset.open = '';
+      e.target.textContent  = 'Voir';
+    }
+    return;
+  }
+
+  // Supprimer
+  if (e.target.classList.contains('btn-cr-del')) {
+    const item      = e.target.closest('.cr-item');
+    const folder    = item.dataset.folder, id = item.dataset.id;
+    const seanceTxt = item.querySelector('.cr-seance')?.textContent || 'ce CR';
+    if (!confirm(`Supprimer définitivement ${seanceTxt} ?\nCette action est irréversible.`)) return;
+    const orig = e.target.textContent;
+    e.target.disabled    = true;
+    e.target.textContent = '…';
+    try {
+      const res  = await fetch(`/api/history/${encodeURIComponent(folder)}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Impossible de supprimer ce CR.');
+      histAllSeances = histAllSeances.filter(s => !(s.folder === folder && s.id === id));
+      applyAndRender();
+    } catch (err) {
+      e.target.disabled    = false;
+      e.target.textContent = orig;
+      alert(err.message || 'Connexion perdue. Réessayez.');
+    }
+    return;
+  }
+});
+
+$('histRefreshBtn').addEventListener('click', loadHistory);
+
+// ══════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════
+async function loadPrompt() {
+  $('promptTextarea').value = 'Chargement…';
+  try {
+    const res  = await fetch('/api/prompt');
+    const data = await res.json();
+    $('promptTextarea').value = data.prompt || '';
+  } catch {
+    $('promptTextarea').value = '';
+    showConfirm('Impossible de charger le prompt.', 'error');
+  }
+}
+
+async function savePrompt() {
+  const prompt = $('promptTextarea').value.trim();
+  if (!prompt) return;
+  try {
+    const res  = await fetch('/api/prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+    const data = await res.json();
+    showConfirm(res.ok ? 'Prompt mis à jour avec succès.' : (data.error || 'Erreur.'), res.ok ? 'ok' : 'error');
+  } catch { showConfirm('Connexion perdue.', 'error'); }
+}
+
+async function resetPrompt() {
+  if (!confirm("Réinitialiser le prompt à la version d'origine ?")) return;
+  try {
+    const res  = await fetch('/api/prompt/reset', { method: 'POST' });
+    const data = await res.json();
+    $('promptTextarea').value = data.prompt || '';
+    showConfirm('Prompt réinitialisé.', 'ok');
+  } catch { showConfirm('Connexion perdue.', 'error'); }
+}
+
+function showConfirm(msg, type) {
+  const el = $('promptConfirm');
+  el.textContent = msg; el.style.color = type === 'error' ? 'var(--error)' : 'var(--teal)';
+  setTimeout(() => { el.textContent = ''; }, 3500);
+}
+
+$('savePromptBtn').addEventListener('click', savePrompt);
+$('resetPromptBtn').addEventListener('click', resetPrompt);
+
+// ══════════════════════════════════════════════════
+//  WORD PREVIEW
+// ══════════════════════════════════════════════════
+
+function parseCRClient(text) {
+  const s = { resume: "", preSophro: "", noteClinic: "", technique: "", pheno: "", orientations: [] };
+  const HEADERS = [
+    { key: "resume",    re: /^RÉSUMÉ EXÉCUTIF[^\n]*/im },
+    { key: "preSophro", re: /^1\.\s*ÉCHANGES PRÉ-SOPHRONIQUES[^\n]*/im },
+    { key: "technique", re: /^2\.\s*TECHNIQUE PRATIQUÉE[^\n]*/im },
+    { key: "pheno",     re: /^3\.\s*PHÉNODESCRIPTION[^\n]*/im },
+    { key: "orient",    re: /^4\.\s*ORIENTATIONS[^\n]*/im },
+  ];
+  const found = HEADERS.map(({ key, re }) => {
+    const m = re.exec(text);
+    return m ? { key, start: m.index, contentStart: m.index + m[0].length } : null;
+  }).filter(Boolean);
+
+  for (let i = 0; i < found.length; i++) {
+    const { key, contentStart } = found[i];
+    const nextStart = found[i + 1]?.start ?? text.length;
+    const content = text.slice(contentStart, nextStart).trim();
+    if      (key === "resume")    { s.resume    = content; }
+    else if (key === "technique") { s.technique = content; }
+    else if (key === "pheno")     { s.pheno     = content; }
+    else if (key === "preSophro") {
+      const nm = content.match(/^Note clinique[\s\S]*$/im);
+      if (nm) { s.noteClinic = nm[0].trim(); s.preSophro = content.slice(0, nm.index).trim(); }
+      else    { s.preSophro = content; }
+    } else if (key === "orient") {
+      s.orientations = content.split("\n").map(l => l.replace(/^[–\-•]\s*/, "").trim()).filter(Boolean);
+    }
+  }
+  const norm = t => t.replace(/\bS(\d)/g, "S#$1");
+  s.resume = norm(s.resume); s.preSophro = norm(s.preSophro);
+  s.noteClinic = norm(s.noteClinic); s.technique = norm(s.technique);
+  s.pheno = norm(s.pheno); s.orientations = s.orientations.map(norm);
+  return s;
+}
+
+function wpLines(text) {
+  return text.split("\n").filter(l => l.trim())
+    .map(l => `<p class="wp-body-p">${escHtml(l.trim())}</p>`).join("");
+}
+
+function wpPreSophro(text) {
+  return text.split("\n").filter(l => l.trim()).map(line => {
+    const m = line.match(/^([A-ZÀ-Ÿa-zà-ÿ\s''']+)\s*[—–-]\s*(.+)/);
+    if (m && m[1].trim().length < 40) {
+      return `<p class="wp-body-p"><span class="wp-theme-label">${escHtml(m[1].trim())}</span> — ${escHtml(m[2].trim())}</p>`;
+    }
+    return `<p class="wp-body-p">${escHtml(line.trim())}</p>`;
+  }).join("");
+}
+
+function renderWordPreview() {
+  const text = $('crPreview').value;
+  const meta = getMeta();
+  const s    = parseCRClient(text);
+
+  const entete = [
+    meta.client     ? `Client : ${meta.client}`           : null,
+    meta.date       ? `Date : ${meta.date}`               : null,
+    meta.seance     ? `Séance n° ${meta.seance}`          : null,
+    meta.motif      ? `Motif : ${meta.motif}`             : null,
+    meta.techniques ? `Technique(s) : ${meta.techniques}` : null,
+    meta.phase      ? `Phase : ${meta.phase}`             : null,
+  ].filter(Boolean).join("   |   ");
+
+  const noteHTML = s.noteClinic ? `
+    <div class="wp-box wp-box-plum" style="margin-top:10px">
+      <div class="wp-box-title wp-plum"><em>Note clinique</em></div>
+      ${wpLines(s.noteClinic.replace(/Note clinique\s*[—–-]?\s*/i, ""))}
+    </div>` : "";
+
+  $('wpContent').innerHTML = `
+    <div class="wp-doc-title">COMPTE-RENDU DE SÉANCE</div>
+    <div class="wp-entete">${escHtml(entete)}</div>
+    <div class="wp-sp"></div>
+
+    <div class="wp-box wp-box-teal">
+      <div class="wp-box-title wp-teal">RÉSUMÉ EXÉCUTIF</div>
+      ${wpLines(s.resume)}
+    </div>
+    <div class="wp-sp"></div>
+
+    <div class="wp-h1">1. ÉCHANGES PRÉ-SOPHRONIQUES</div>
+    <div class="wp-sp-sm"></div>
+    ${wpPreSophro(s.preSophro)}
+    ${noteHTML}
+    <div class="wp-sp"></div>
+
+    <div class="wp-h1">2. TECHNIQUE PRATIQUÉE</div>
+    <div class="wp-sp-sm"></div>
+    ${wpLines(s.technique)}
+    <div class="wp-sp"></div>
+
+    <div class="wp-h1">3. PHÉNODESCRIPTION</div>
+    <div class="wp-sp-sm"></div>
+    ${wpLines(s.pheno)}
+    <div class="wp-sp"></div>
+
+    <div class="wp-h1">4. ORIENTATIONS</div>
+    <div class="wp-sp-sm"></div>
+    ${s.orientations.map(o => `<p class="wp-bullet">– ${escHtml(o)}</p>`).join("")}
+
+    <div class="wp-doc-footer">Vanessa Slous · sophroslous.fr — 1</div>
+  `;
+}
+
+$('pmtText').addEventListener('click', () => {
+  $('pmtText').classList.add('active');
+  $('pmtWord').classList.remove('active');
+  $('previewTextMode').style.display = '';
+  $('previewWordMode').style.display = 'none';
+});
+
+$('pmtWord').addEventListener('click', () => {
+  $('pmtWord').classList.add('active');
+  $('pmtText').classList.remove('active');
+  $('previewTextMode').style.display = 'none';
+  $('previewWordMode').style.display = '';
+  renderWordPreview();
+});
 </script>
 
 </body>

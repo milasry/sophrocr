@@ -1,3 +1,7 @@
 node_modules/
 .env
 *.docx
+uploads/
+history/
+prompts/system_prompt_custom.txt
+.claude/
