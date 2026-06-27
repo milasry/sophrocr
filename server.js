@@ -74,7 +74,7 @@ button:hover{background:#235f69}
   </div>
   <form method="POST" action="/login">
     <label for="usr">Identifiant</label>
-    <input type="text" id="usr" name="username" autocomplete="username" placeholder="vanessa" style="margin-bottom:14px">
+    <input type="text" id="usr" name="username" autocomplete="username" placeholder="van" style="margin-bottom:14px">
     <label for="pwd">Mot de passe</label>
     <input type="password" id="pwd" name="password" autocomplete="current-password" placeholder="••••••••">
     <button type="submit">Accéder</button>
