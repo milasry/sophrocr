@@ -129,6 +129,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'public', 'settings.html')));
 
 // ── UPLOADS DIR ───────────────────────────────────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
