@@ -1,3 +1,125 @@
+# SophroCR — Session Reports for Caycedian Sophrology
+
+Private tool for **Vanessa Slous**, Caycedian sophrologist · [sophroslous.fr](https://sophroslous.fr)
+
+Automatically transcribes session audio recordings (via AssemblyAI), generates structured session reports (via Claude / Anthropic), and exports them as formatted Word documents.
+
+---
+
+## Features
+
+- **Automatic audio transcription** — upload one or more audio files, two-speaker diarization (sophrologist / client), French transcription via AssemblyAI
+- **Manual transcription** — direct text input for cases without audio or when the service is unavailable
+- **Report generation** — Claude produces a structured report in 4 sections following Caycedian rules: Pre-sophronic exchanges, Technique practiced, Phenomenological description, Orientations + Executive summary
+- **Word preview** — visual rendering of the document before download (accurate layout)
+- **Word download (.docx)** — formatted document matching the practice's visual identity
+- **History** — browse and re-download past reports (stored in database), with full in-place editing
+- **Authentication** — password-protected access, HMAC-SHA256 signed cookie, brute-force protection (10 attempts / 15 min per IP)
+- **Non-indexed** — excluded from search engines (`robots.txt` + `X-Robots-Tag` header)
+
+---
+
+## Project structure
+
+```
+sophrocr/
+├── server.js              → Express: auth, audio upload, transcription, report generation, history
+├── generate_cr.js         → parseCR() (section parser) + Word document builder (docx)
+├── prompts/
+│   └── system_prompt.txt  → Caycedian rules and report structure sent to Claude
+├── public/
+│   ├── index.html         → main app (tabs: Session · History · Settings)
+│   ├── rgpd.html          → privacy & GDPR page
+│   └── robots.txt         → blocks search engine indexing
+├── .env.example           → configuration template
+├── package.json
+└── .gitignore
+```
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Node.js + Express |
+| Transcription | AssemblyAI (diarization, French) |
+| Report generation | Anthropic Claude (`claude-sonnet-4-6`) |
+| Word | `docx` library |
+| History | PostgreSQL (Neon) |
+| Frontend | Vanilla HTML/CSS/JS |
+
+---
+
+## Local setup
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18 or later
+- An [Anthropic](https://console.anthropic.com) account (API key)
+- An [AssemblyAI](https://www.assemblyai.com) account (API key)
+- A PostgreSQL database (e.g. [Neon](https://neon.tech), free tier)
+
+### Steps
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Create the configuration file
+cp .env.example .env
+
+# 3. Fill in your keys in .env (see comments in the file)
+# 4. Start the server
+npm start
+```
+
+Open `http://localhost:3000` in your browser.
+
+---
+
+## Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Anthropic API key (report generation) |
+| `ASSEMBLYAI_API_KEY` | AssemblyAI API key (audio transcription) |
+| `DATABASE_URL` | Full PostgreSQL connection string (report history) |
+| `PORT` | Server port (default: 3000) |
+| `ACCESS_PASSWORD` | Access password (leave empty = no protection) |
+| `COOKIE_SECRET` | HMAC key for signing session cookies |
+
+Generate `COOKIE_SECRET`:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+---
+
+## Deployment (Railway)
+
+1. Create a project on [Railway](https://railway.app)
+2. Choose **Deploy from GitHub repo** → select this repository
+3. In the service → **Variables** tab → add all variables from the table above
+4. In **Settings → Networking → Generate Domain** to get a public URL
+5. Railway auto-detects `npm start` and redeploys on every `git push`
+
+The Railway-generated URL is random (not guessable) + the password prevents any unauthorized access.
+
+> **Note**: the password and any custom prompt edited via the UI are stored in the database — they survive redeploys.
+
+---
+
+## Security & privacy
+
+- Audio files are **never stored** permanently — deleted immediately after upload to AssemblyAI
+- Transcriptions are **not saved** to the database
+- Only the written reports and session metadata are retained (deletable from the History tab)
+- AssemblyAI and Anthropic do not use API data to train their models (contractual commitment)
+- See the built-in [GDPR page](public/rgpd.html) for full details
+
+---
+
 # SophroCR — Comptes-rendus de séances de sophrologie
 
 Outil privé de **Vanessa Slous**, sophrologue caycédienne · [sophroslous.fr](https://sophroslous.fr)
