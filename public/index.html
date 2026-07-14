@@ -145,6 +145,8 @@ textarea { resize: vertical; }
 .sz-done-check { color: var(--teal); font-size: 18px; flex-shrink: 0; }
 .sz-done-label { font-size: 13px; color: var(--dark); font-weight: 600; }
 .sz-redo-btn { background: none; border: none; color: var(--teal); font-size: 12px; font-family: inherit; cursor: pointer; text-decoration: underline; padding: 0; margin-left: 6px; }
+.sz-swap-btn { background: none; border: 1.5px solid var(--plum); color: var(--plum); font-size: 12px; font-family: inherit; cursor: pointer; padding: 3px 9px; border-radius: 4px; margin-left: 6px; white-space: nowrap; }
+.sz-swap-btn:hover { background: var(--plum-light); }
 
 /* Slot error */
 .slot-error { font-size: 12.5px; color: var(--error); padding: 0 14px 10px; display: none; }
@@ -771,6 +773,7 @@ function slotHTML(slot, index) {
     <div class="sz-done">
       <span class="sz-done-check">✓</span>
       <span class="sz-done-label">Terminée</span>
+      <button class="sz-swap-btn">⇅ Inverser A/B</button>
       <button class="sz-redo-btn">Changer</button>
     </div>
   </div>
@@ -912,6 +915,21 @@ $('audioSlots').addEventListener('click', e => {
   if (e.target.closest('.slot-remove-btn')) { removeSlot(id); return; }
   if (e.target.closest('.sz-clear-btn'))    { clearSlotFile(id); return; }
   if (e.target.closest('.sz-redo-btn'))     { redoSlot(id); return; }
+  if (e.target.closest('.sz-swap-btn')) {
+    const slot = getSlot(id);
+    if (!slot?.transcript) return;
+    slot.transcript = slot.transcript.split('\n').map(l => {
+      if (l.startsWith('Sophrologue :')) return 'Client :' + l.slice('Sophrologue :'.length);
+      if (l.startsWith('Client :'))     return 'Sophrologue :' + l.slice('Client :'.length);
+      return l;
+    }).join('\n');
+    const combined = combineTranscripts();
+    if (combined) $('transcription').value = combined;
+    const btn = e.target.closest('.sz-swap-btn');
+    btn.textContent = '✓ Inversé';
+    setTimeout(() => { btn.textContent = '⇅ Inverser A/B'; }, 1800);
+    return;
+  }
 
   // Clicking the idle label triggers file input (handled by <label for>)
   // But we also need to wire the hidden file input to our handler
