@@ -59,7 +59,7 @@ body { font-family: Calibri, "Segoe UI", Arial, sans-serif; background: var(--gr
 .form-row .form-group + .form-group { margin-top: 0; }
 label { font-size: 11.5px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .req { color: var(--teal); }
-input[type=text], textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; color: var(--dark); background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; }
+input[type=text], input[type=date], textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 14px; color: var(--dark); background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; }
 input:focus, textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(46,125,138,0.12); }
 textarea { resize: vertical; }
 
@@ -199,6 +199,9 @@ textarea { resize: vertical; }
 .wp-theme-label { color: #5B3A6E; font-style: italic; font-weight: bold; }
 .wp-bullet    { margin: 3px 0; line-height: 1.6; padding-left: 14px; }
 .wp-doc-footer { margin-top: 26px; padding-top: 5px; border-top: 1px solid #CCCCCC; font-size: 11px; color: #666; text-align: center; }
+.wp-header-table { width: 100%; border-collapse: collapse; padding-bottom: 4px; border-bottom: 3px solid #2E7D8A; margin-bottom: 0; }
+.wp-header-label { width: 90px; color: #666; font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.04em; padding: 2px 8px 2px 0; vertical-align: top; white-space: nowrap; }
+.wp-header-val   { color: #1A1A1A; font-size: 12px; padding: 2px 0; vertical-align: top; }
 
 /* ── EMPTY STATE ─────────────────────────────────── */
 .empty-state { text-align: center; padding: 56px 20px 48px; }
@@ -356,7 +359,7 @@ textarea { resize: vertical; }
         </div>
         <div class="form-group">
           <label for="date">Date <span class="req">*</span></label>
-          <input type="text" id="date" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off">
+          <input type="date" id="date" autocomplete="off">
         </div>
         <div class="form-group">
           <label for="seance">Séance n° <span class="req">*</span></label>
@@ -418,12 +421,12 @@ textarea { resize: vertical; }
       <div class="card-title">Compte-rendu généré</div>
 
       <div class="preview-mode-tabs">
-        <button class="pmt-btn active" id="pmtText">Texte</button>
-        <button class="pmt-btn"        id="pmtWord">Aperçu Word</button>
+        <button class="pmt-btn"        id="pmtText">Texte brut</button>
+        <button class="pmt-btn active" id="pmtWord">Aperçu Word</button>
       </div>
 
       <!-- Mode texte -->
-      <div id="previewTextMode">
+      <div id="previewTextMode" style="display:none">
         <p style="font-size:13px; color:var(--gray); margin-bottom:12px; line-height:1.5;">
           Relisez et corrigez le texte ci-dessous avant de télécharger le Word.
         </p>
@@ -431,7 +434,7 @@ textarea { resize: vertical; }
       </div>
 
       <!-- Mode aperçu -->
-      <div id="previewWordMode" style="display:none">
+      <div id="previewWordMode">
         <div class="wp-outer">
           <div class="wp-page" id="wpContent"></div>
         </div>
@@ -611,24 +614,29 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// ── DATE AUTO-FORMAT ───────────────────────────────
-$('date').addEventListener('input', function () {
-  let v = this.value.replace(/\D/g, '');
-  if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
-  if (v.length > 5) v = v.slice(0, 5) + '/' + v.slice(5, 9);
-  this.value = v;
-});
+// ── DATE ───────────────────────────────────────────
 (function () {
   const d = new Date();
-  $('date').value = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  $('date').value = `${y}-${mo}-${da}`;
 })();
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 function parseDateFR(raw) {
+  if (!raw) return raw;
+  // Format ISO de <input type="date"> : YYYY-MM-DD
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const mo = parseInt(iso[2], 10) - 1;
+    return MONTHS[mo] ? `${parseInt(iso[3], 10)} ${MONTHS[mo]} ${iso[1]}` : raw;
+  }
+  // Format legacy JJ/MM/AAAA (pour compatibilité avec l'historique)
   const p = raw.split('/');
   if (p.length !== 3) return raw;
   const m = parseInt(p[1], 10) - 1;
-  return (!isNaN(m) && MONTHS[m]) ? `${parseInt(p[0],10)} ${MONTHS[m]} ${p[2]}` : raw;
+  return (!isNaN(m) && MONTHS[m]) ? `${parseInt(p[0], 10)} ${MONTHS[m]} ${p[2]}` : raw;
 }
 function getMeta() {
   return {
@@ -1055,6 +1063,12 @@ async function generate() {
     if (!res.ok) { setStatus(data.error || 'Une erreur est survenue.', 'error'); return; }
 
     $('crPreview').value = data.cr;
+    // Afficher l'aperçu Word par défaut
+    $('pmtWord').classList.add('active');
+    $('pmtText').classList.remove('active');
+    $('previewTextMode').style.display = 'none';
+    $('previewWordMode').style.display = '';
+    renderWordPreview();
     $('previewSection').style.display = 'block';
     setStatus('Compte-rendu généré. Relisez avant de télécharger.', 'ok');
     $('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1508,7 +1522,7 @@ $('pwdForm').addEventListener('submit', async (e) => {
 // ══════════════════════════════════════════════════
 
 function parseCRClient(text) {
-  const s = { resume: "", preSophro: "", noteClinic: "", technique: "", techniqueHeader: "2. TECHNIQUE PRATIQUÉE", pheno: "", orientations: [] };
+  const s = { resume: "", preSophro: "", noteClinic: "", technique: "", techniqueHeader: "2. TECHNIQUE PRATIQUÉE", pheno: "", noteClinicPheno: "", orientations: [] };
   const HEADERS = [
     { key: "resume",    re: /^RÉSUMÉ EXÉCUTIF[^\n]*/im },
     { key: "preSophro", re: /^1\.\s*ÉCHANGES PRÉ-SOPHRONIQUES[^\n]*/im },
@@ -1527,7 +1541,11 @@ function parseCRClient(text) {
     const content = text.slice(contentStart, nextStart).trim();
     if      (key === "resume")    { s.resume    = content; }
     else if (key === "technique") { s.technique = content; s.techniqueHeader = found[i].header; }
-    else if (key === "pheno")     { s.pheno     = content; }
+    else if (key === "pheno") {
+      const nm2 = content.match(/^Note clinique[\s\S]*$/im);
+      if (nm2) { s.noteClinicPheno = nm2[0].trim(); s.pheno = content.slice(0, nm2.index).trim(); }
+      else     { s.pheno = content; }
+    }
     else if (key === "preSophro") {
       const nm = content.match(/^Note clinique[\s\S]*$/im);
       if (nm) { s.noteClinic = nm[0].trim(); s.preSophro = content.slice(0, nm.index).trim(); }
@@ -1539,7 +1557,8 @@ function parseCRClient(text) {
   const norm = t => t.replace(/\bS(\d)/g, "S#$1");
   s.resume = norm(s.resume); s.preSophro = norm(s.preSophro);
   s.noteClinic = norm(s.noteClinic); s.technique = norm(s.technique);
-  s.pheno = norm(s.pheno); s.orientations = s.orientations.map(norm);
+  s.pheno = norm(s.pheno); s.noteClinicPheno = norm(s.noteClinicPheno);
+  s.orientations = s.orientations.map(norm);
   return s;
 }
 
@@ -1563,14 +1582,18 @@ function renderWordPreview() {
   const meta = getMeta();
   const s    = parseCRClient(text);
 
-  const entete = [
-    meta.client     ? `Client : ${meta.client}`           : null,
-    meta.date       ? `Date : ${meta.date}`               : null,
-    meta.seance     ? `Séance n° ${meta.seance}`          : null,
-    meta.motif      ? `Motif : ${meta.motif}`             : null,
-    meta.techniques ? `Technique(s) : ${meta.techniques}` : null,
-    meta.phase      ? `Phase : ${meta.phase}`             : null,
-  ].filter(Boolean).join("   |   ");
+  const headerFields = [
+    meta.client     ? { label: 'Client',       val: meta.client }       : null,
+    meta.date       ? { label: 'Date',         val: meta.date }         : null,
+    meta.seance     ? { label: 'Séance n°',    val: meta.seance }       : null,
+    meta.motif      ? { label: 'Motif',        val: meta.motif }        : null,
+    meta.techniques ? { label: 'Technique(s)', val: meta.techniques }   : null,
+    meta.phase      ? { label: 'Phase',        val: meta.phase }        : null,
+  ].filter(Boolean);
+
+  const headerHTML = `<table class="wp-header-table">
+    ${headerFields.map(f => `<tr><td class="wp-header-label">${escHtml(f.label)}</td><td class="wp-header-val">${escHtml(f.val)}</td></tr>`).join('')}
+  </table>`;
 
   const noteHTML = s.noteClinic ? `
     <div class="wp-box wp-box-plum" style="margin-top:10px">
@@ -1578,9 +1601,15 @@ function renderWordPreview() {
       ${wpLines(s.noteClinic.replace(/Note clinique\s*[—–-]?\s*/i, ""))}
     </div>` : "";
 
+  const noteHTMLPheno = s.noteClinicPheno ? `
+    <div class="wp-box wp-box-plum" style="margin-top:10px">
+      <div class="wp-box-title wp-plum"><em>Note clinique</em></div>
+      ${wpLines(s.noteClinicPheno.replace(/Note clinique\s*[—–-]?\s*/i, ""))}
+    </div>` : "";
+
   $('wpContent').innerHTML = `
     <div class="wp-doc-title">COMPTE-RENDU DE SÉANCE</div>
-    <div class="wp-entete">${escHtml(entete)}</div>
+    ${headerHTML}
     <div class="wp-sp"></div>
 
     <div class="wp-box wp-box-teal">
@@ -1603,6 +1632,7 @@ function renderWordPreview() {
     <div class="wp-h1">3. PHÉNODESCRIPTION</div>
     <div class="wp-sp-sm"></div>
     ${wpLines(s.pheno)}
+    ${noteHTMLPheno}
     <div class="wp-sp"></div>
 
     <div class="wp-h1">4. ORIENTATIONS</div>

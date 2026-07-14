@@ -68,7 +68,8 @@ function h1(text) {
 function body(text, opts = {}) {
   return new Paragraph({
     children: [new TextRun({ text, size: 20, font: "Calibri", color: COLORS.dark, ...opts })],
-    spacing: { before: 40, after: 40 }
+    spacing: { before: 40, after: 40 },
+    alignment: AlignmentType.JUSTIFIED
   });
 }
 
@@ -101,6 +102,44 @@ function box(paragraphs, bg = COLORS.lightTeal) {
   });
 }
 
+/**
+ * Tableau d'en-tête du document (Client, Date, Séance, Motif, Technique, Phase)
+ * Remplace la ligne d'entête inline par un vrai tableau 2 colonnes.
+ */
+function buildHeaderTable(fields) {
+  const LW = 1900;
+  const VW = CONTENT_W - LW;
+  return new Table({
+    width: { size: CONTENT_W, type: WidthType.DXA },
+    columnWidths: [LW, VW],
+    rows: fields.map(({ label, value }, idx) => {
+      const isLast = idx === fields.length - 1;
+      const botB = isLast
+        ? { style: BorderStyle.SINGLE, size: 6, color: COLORS.teal, space: 1 }
+        : noBorder;
+      const cb = { top: noBorder, left: noBorder, right: noBorder, bottom: botB };
+      return new TableRow({
+        children: [
+          new TableCell({
+            width: { size: LW, type: WidthType.DXA }, borders: cb,
+            margins: { top: 20, bottom: 20, left: 0, right: 100 },
+            children: [new Paragraph({
+              children: [new TextRun({ text: label.toUpperCase(), size: 16, font: "Calibri", color: COLORS.gray, bold: true })]
+            })]
+          }),
+          new TableCell({
+            width: { size: VW, type: WidthType.DXA }, borders: cb,
+            margins: { top: 20, bottom: 20, left: 0, right: 0 },
+            children: [new Paragraph({
+              children: [new TextRun({ text: value, size: 18, font: "Calibri", color: COLORS.dark })]
+            })]
+          })
+        ]
+      });
+    })
+  });
+}
+
 // ── PARSEUR DU TEXTE CLAUDE ───────────────────────────────────
 /**
  * Découpe le texte brut renvoyé par Claude (structure en 4
@@ -121,6 +160,7 @@ function parseCR(text) {
     technique: "",
     techniqueHeader: "2. TECHNIQUE PRATIQUÉE",
     pheno: "",
+    noteClinicPheno: "",
     orientations: []
   };
 
@@ -151,7 +191,13 @@ function parseCR(text) {
       sections.technique = content;
       sections.techniqueHeader = found[i].header;
     } else if (key === "pheno") {
-      sections.pheno = content;
+      const noteMatch = content.match(/^Note clinique[\s\S]*$/im);
+      if (noteMatch) {
+        sections.noteClinicPheno = noteMatch[0].trim();
+        sections.pheno = content.slice(0, noteMatch.index).trim();
+      } else {
+        sections.pheno = content;
+      }
     } else if (key === "preSophro") {
       const noteMatch = content.match(/^Note clinique[\s\S]*$/im);
       if (noteMatch) {
@@ -173,12 +219,13 @@ function parseCR(text) {
   // S#3 n'est pas touché car S y est suivi de # (pas d'un chiffre).
   // SAVa, SDNc, etc. ne correspondent pas (S suivi d'une lettre).
   const norm = t => t.replace(/\bS(\d)/g, "S#$1");
-  sections.resume       = norm(sections.resume);
-  sections.presSophro   = norm(sections.presSophro);
-  sections.noteClinic   = norm(sections.noteClinic);
-  sections.technique    = norm(sections.technique);
-  sections.pheno        = norm(sections.pheno);
-  sections.orientations = sections.orientations.map(norm);
+  sections.resume          = norm(sections.resume);
+  sections.presSophro      = norm(sections.presSophro);
+  sections.noteClinic      = norm(sections.noteClinic);
+  sections.technique       = norm(sections.technique);
+  sections.pheno           = norm(sections.pheno);
+  sections.noteClinicPheno = norm(sections.noteClinicPheno);
+  sections.orientations    = sections.orientations.map(norm);
 
   return sections;
 }
@@ -193,14 +240,15 @@ function formatPreSophro(text) {
   const lines = text.split("\n").filter(l => l.trim());
 
   for (const line of lines) {
-    const themeMatch = line.match(/^([A-ZÀ-Ÿa-zà-ÿ\s''’]+)\s*[—–-]\s*(.+)/);
+    const themeMatch = line.match(/^([A-ZÀ-Ÿa-zà-ÿ\s’’’]+)\s*[—–-]\s*(.+)/);
     if (themeMatch && themeMatch[1].length < 40) {
       paragraphs.push(new Paragraph({
         children: [
           new TextRun({ text: themeMatch[1].trim(), size: 20, font: "Calibri", italics: true, bold: true, color: COLORS.plum }),
           new TextRun({ text: " — " + themeMatch[2].trim(), size: 20, font: "Calibri", color: COLORS.dark })
         ],
-        spacing: { before: 50, after: 30 }
+        spacing: { before: 50, after: 30 },
+        alignment: AlignmentType.JUSTIFIED
       }));
     } else {
       paragraphs.push(body(line));
@@ -219,14 +267,14 @@ async function generateCR(data) {
   const { client, date, seance, motif, techniques, phase, cr } = data;
   const sections = parseCR(cr);
 
-  const entete = [
-    `Client : ${client}`,
-    `Date : ${date}`,
-    `Séance n° ${seance}`,
-    `Motif : ${motif}`,
-    `Technique(s) : ${techniques}`,
-    phase ? `Phase : ${phase}` : null
-  ].filter(Boolean).join("   |   ");
+  const headerFields = [
+    { label: "Client",       value: client     || '' },
+    { label: "Date",         value: date       || '' },
+    { label: "Séance n°",    value: seance     || '' },
+    { label: "Motif",        value: motif      || '' },
+    { label: "Technique(s)", value: techniques || '' },
+    ...(phase ? [{ label: "Phase", value: phase }] : [])
+  ];
 
   const doc = new Document({
     numbering: {
@@ -270,11 +318,7 @@ async function generateCR(data) {
           children: [new TextRun({ text: "COMPTE-RENDU DE SÉANCE", bold: true, size: 30, color: COLORS.teal, font: "Georgia" })],
           spacing: { before: 0, after: 60 }
         }),
-        new Paragraph({
-          children: [new TextRun({ text: entete, size: 18, font: "Calibri", color: COLORS.gray })],
-          spacing: { before: 0, after: 0 },
-          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: COLORS.teal, space: 1 } }
-        }),
+        buildHeaderTable(headerFields),
         sp(120),
 
         // ── RÉSUMÉ EXÉCUTIF ────────────────────────────────────
@@ -320,6 +364,19 @@ async function generateCR(data) {
         h1("3. PHÉNODESCRIPTION"),
         sp(60),
         ...sections.pheno.split("\n").filter(l => l.trim()).map(l => body(l.trim())),
+        sections.noteClinicPheno ? sp(60) : sp(0),
+        sections.noteClinicPheno ? box(
+          [
+            new Paragraph({
+              children: [new TextRun({ text: "Note clinique", bold: true, italics: true, size: 20, font: "Calibri", color: COLORS.plum })],
+              spacing: { before: 0, after: 40 }
+            }),
+            ...sections.noteClinicPheno
+              .replace(/Note clinique\s*[—–-]?\s*/i, "")
+              .split("\n").filter(l => l.trim()).map(l => body(l.trim()))
+          ],
+          COLORS.lightPlum
+        ) : sp(0),
         sp(),
 
         // ── 4. ORIENTATIONS ────────────────────────────────────
