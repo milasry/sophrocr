@@ -310,12 +310,12 @@ app.post('/api/generate', async (req, res) => {
     const { client, date, seance, motif, techniques, phase, notes, transcription } = req.body;
 
     if (!transcription?.trim()) return res.status(400).json({ error: "La transcription est vide." });
-    if (!client || !date || !seance || !motif || !techniques) return res.status(400).json({ error: "Merci de remplir tous les champs obligatoires." });
+    if (!client || !date || !seance || !motif) return res.status(400).json({ error: "Merci de remplir tous les champs obligatoires." });
 
     const userMessage = [
       `Génère le compte-rendu.`,
       `Client : ${client}`, `Date : ${date}`, `Séance n° : ${seance}`,
-      `Motif : ${motif}`, `Technique(s) : ${techniques}`,
+      `Motif : ${motif}`,
       phase ? `Phase : ${phase}` : null,
       notes ? `Notes personnelles : ${notes}` : null,
       ``, `TRANSCRIPTION (avec locuteurs identifiés si disponibles) :`, transcription

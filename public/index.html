@@ -370,15 +370,9 @@ textarea { resize: vertical; }
         <label for="motif">Motif de suivi <span class="req">*</span></label>
         <input type="text" id="motif" placeholder="ex. Gestion de la charge mentale" autocomplete="off">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="techniques">Technique(s) <span class="req">*</span></label>
-          <input type="text" id="techniques" placeholder="ex. SBVc + SDNc + SAVa" autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label for="phase">Phase du protocole</label>
-          <input type="text" id="phase" placeholder="ex. Installation des 3TC" autocomplete="off">
-        </div>
+      <div class="form-group">
+        <label for="phase">Phase du protocole</label>
+        <input type="text" id="phase" placeholder="ex. Installation des 3TC" autocomplete="off">
       </div>
       <div class="form-group">
         <label for="notes">Notes personnelles</label>
@@ -638,13 +632,24 @@ function parseDateFR(raw) {
   const m = parseInt(p[1], 10) - 1;
   return (!isNaN(m) && MONTHS[m]) ? `${parseInt(p[0], 10)} ${MONTHS[m]} ${p[2]}` : raw;
 }
+// Technique auto-extraite du CR généré par Claude (section 2)
+let autoTechniques = '';
+
+function extractTechniquesFromCR(crText) {
+  const s = parseCRClient(crText);
+  const firstLine = (s.technique || '').split('\n').map(l => l.trim()).find(l => l);
+  if (!firstLine) return '';
+  const beforeDash = firstLine.match(/^(.+?)\s*[—–]\s*/);
+  return beforeDash ? beforeDash[1].trim() : firstLine.slice(0, 80).trim();
+}
+
 function getMeta() {
   return {
     client:     $('client').value.trim(),
     date:       parseDateFR($('date').value.trim()),
     seance:     $('seance').value.trim(),
     motif:      $('motif').value.trim(),
-    techniques: $('techniques').value.trim(),
+    techniques: autoTechniques,
     phase:      $('phase').value.trim(),
     notes:      $('notes').value.trim(),
   };
@@ -1044,13 +1049,14 @@ async function generate() {
   const meta = getMeta();
   const transcription = $('transcription').value.trim();
 
-  if (!meta.client || !$('date').value.trim() || !meta.seance || !meta.motif || !meta.techniques) {
+  if (!meta.client || !$('date').value.trim() || !meta.seance || !meta.motif) {
     setStatus('Merci de remplir tous les champs obligatoires (*).', 'error'); return;
   }
   if (!transcription) {
     setStatus('La transcription est vide. Collez le texte ou uploadez un fichier audio.', 'error'); return;
   }
 
+  autoTechniques = '';
   $('generateBtn').disabled = true;
   setStatus('Génération en cours… (quelques secondes)', 'loading');
 
@@ -1063,6 +1069,7 @@ async function generate() {
     if (!res.ok) { setStatus(data.error || 'Une erreur est survenue.', 'error'); return; }
 
     $('crPreview').value = data.cr;
+    autoTechniques = extractTechniquesFromCR(data.cr);
     // Afficher l'aperçu Word par défaut
     $('pmtWord').classList.add('active');
     $('pmtText').classList.remove('active');
