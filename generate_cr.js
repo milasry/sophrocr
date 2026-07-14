@@ -363,7 +363,7 @@ async function generateCR(data) {
         // ── 3. PHÉNODESCRIPTION ────────────────────────────────
         h1("3. PHÉNODESCRIPTION"),
         sp(60),
-        ...sections.pheno.split("\n").filter(l => l.trim()).map(l => body(l.trim())),
+        ...formatPreSophro(sections.pheno),
         sections.noteClinicPheno ? sp(60) : sp(0),
         sections.noteClinicPheno ? box(
           [
