@@ -28,9 +28,20 @@ Verbatim significatifs entre guillemets.
 Note clinique intégrée à la fin de cette section, sur une ligne commençant par "Note clinique — " (observations, vigilance, hypothèses).
 
 2. TECHNIQUE PRATIQUÉE - XX'
-Intègre la durée totale estimée directement dans le titre de section, ex. : "2. TECHNIQUE PRATIQUÉE - 25'"
-Contenu : technique(s) conduite(s) avec abréviations caycédiennes, déroulé chronologique, durées par phase, écarts par rapport au protocole standard.
-PAS de vivances ici — elles vont dans la section 3.
+Intègre la durée totale estimée dans le titre, ex. : "2. TECHNIQUE PRATIQUÉE - 25'"
+Format : une ligne par technique ou bloc pratiqué, noms abrégés uniquement, pas de descriptif.
+Modèle de ligne : Technique (durée') — éléments internes séparés par " + "
+Éléments à capturer si présents, dans l'ordre chronologique :
+– Posture : NSL debout, NSL assis, position couchée…
+– Technique principale : SBVc, SDNc, SAVa, SPI, SPP, SAP, SPF…
+– Respis (si pratiqués)
+– DSBV (si réalisé)
+– Pauses : PPhI, PPhT
+– 3KP (si réalisé)
+– Souhaits (si formulés)
+– Exercices RD : RD1, RD2, RD3, RD4 (si pratiqués)
+Exemple : SBVc (20') — NSL assis + Respis + PPhI + 3KP + Souhaits + PPhT
+PAS de vivances ici — elles vont dans la section 3. PAS de descriptions ou d'explications : noms abrégés seulement.
 
 3. PHÉNODESCRIPTION
 Ce que le client a verbalisé : sensations, images, émotions, phénomènes corporels. Verbatim entre guillemets. Prises de conscience en conclusion.
