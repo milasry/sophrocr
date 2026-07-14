@@ -262,7 +262,13 @@ app.post('/api/transcribe', (req, res) => {
       const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
         method: 'POST',
         headers: { authorization: aaiKey, 'content-type': 'application/json' },
-        body: JSON.stringify({ audio_url: upload_url, speaker_labels: true, speakers_expected: 2, language_code: 'fr' })
+        body: JSON.stringify({
+          audio_url: upload_url,
+          language_code: 'fr',
+          ...(parseInt(req.body.speakers, 10) === 1
+            ? {}
+            : { speaker_labels: true, speakers_expected: 2 })
+        })
       });
       if (!transcriptRes.ok) {
         const errBody = await transcriptRes.json().catch(() => ({}));
@@ -328,7 +334,7 @@ app.post('/api/generate', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 2000,
+        model: 'claude-sonnet-4-6', max_tokens: 4000,
         system: `${getSystemPrompt()}\n\n=== DOCUMENT DE RÉFÉRENCE CAYCÉDIENNE ===\n${getReferenceDoc()}`,
         messages: [{ role: 'user', content: userMessage }]
       })

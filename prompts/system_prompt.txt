@@ -18,7 +18,7 @@ RÈGLES ABSOLUES :
 STRUCTURE OBLIGATOIRE (respecte exactement ces en-têtes de section, pour que le texte puisse être découpé automatiquement) :
 
 RÉSUMÉ EXÉCUTIF
-3 à 5 lignes. Vue d'ensemble : état d'arrivée du client, tonalité générale de la séance, vivance la plus marquante, et en dernière ligne la ou les orientations clés pour la suite. Ne pas mentionner les techniques pratiquées (elles appartiennent à la section 2). Pas de détail de vivance ici — synthèse uniquement.
+3 à 5 lignes. Prise de hauteur stricte : chaque ligne apporte une information qui ne se retrouve pas formulée telle quelle dans les sections 1 à 4. Ne jamais reformuler ce qui sera lu en détail dans le corps du CR. Vue d'ensemble : état d'arrivée du client (en quelques mots), tonalité générale de la séance, vivance la plus significative (nommée, pas décrite), orientation clé pour la suite. Pas de techniques (section 2). Pas de chapeau introductif.
 
 1. ÉCHANGES PRÉ-SOPHRONIQUES
 Retour entraînement, état d'arrivée, échanges avant la pratique.

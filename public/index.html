@@ -107,7 +107,11 @@ textarea { resize: vertical; }
 .slot-remove-btn:hover:not(:disabled) { color: var(--error); background: #FFF0F0; }
 .slot-remove-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
-.slot-meta-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.slot-meta-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); align-items: start; }
+.slot-speakers-toggle { display: flex; gap: 4px; margin-top: 4px; }
+.spk-btn { width: 34px; height: 28px; border: 1.5px solid var(--border); border-radius: 5px; background: white; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--gray); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+.spk-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+.cr-text-hint { font-size: 11.5px; color: var(--gray); background: #FFF8E7; border-left: 3px solid #F0B429; padding: 8px 12px; border-radius: 0 4px 4px 0; margin-bottom: 10px; line-height: 1.7; }
 .slot-meta-label { font-size: 11px; color: var(--gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
 
 /* Slot zone states */
@@ -423,9 +427,10 @@ textarea { resize: vertical; }
 
       <!-- Mode texte -->
       <div id="previewTextMode" style="display:none">
-        <p style="font-size:13px; color:var(--gray); margin-bottom:12px; line-height:1.5;">
-          Relisez et corrigez le texte ci-dessous avant de télécharger le Word.
-        </p>
+        <div class="cr-text-hint">
+          <strong>En-têtes de section à ne pas modifier</strong> — le découpage automatique en dépend :<br>
+          <code>RÉSUMÉ EXÉCUTIF</code> &nbsp;·&nbsp; <code>1. ÉCHANGES PRÉ-SOPHRONIQUES</code> &nbsp;·&nbsp; <code>2. TECHNIQUE PRATIQUÉE - XX'</code> &nbsp;·&nbsp; <code>3. PHÉNODESCRIPTION</code> &nbsp;·&nbsp; <code>4. ORIENTATIONS</code>
+        </div>
         <textarea id="crPreview" rows="22"></textarea>
       </div>
 
@@ -733,6 +738,13 @@ function slotHTML(slot, index) {
         placeholder="ex. Discussion avant la pratique sophrologique"
         value="${escHtml(slot.description)}">
     </div>
+    <div>
+      <span class="slot-meta-label">Locuteurs</span>
+      <div class="slot-speakers-toggle">
+        <button class="spk-btn${slot.speakers === 1 ? ' active' : ''}" data-spk="1">1</button>
+        <button class="spk-btn${slot.speakers !== 1 ? ' active' : ''}" data-spk="2">2</button>
+      </div>
+    </div>
   </div>
 
   <div class="slot-zone" data-state="${slot.state}">
@@ -866,7 +878,7 @@ function saveMeta() {
 // ── Add / remove slots ─────────────────────────────
 function addSlot() {
   if (slots.length >= MAX_SLOTS) return;
-  slots.push({ id: nextSlotId++, file: null, label: '', description: '', transcriptId: null, transcript: null, state: 'idle' });
+  slots.push({ id: nextSlotId++, file: null, label: '', description: '', speakers: 2, transcriptId: null, transcript: null, state: 'idle' });
   renderSlots();
 }
 
@@ -915,6 +927,15 @@ $('audioSlots').addEventListener('click', e => {
   if (e.target.closest('.slot-remove-btn')) { removeSlot(id); return; }
   if (e.target.closest('.sz-clear-btn'))    { clearSlotFile(id); return; }
   if (e.target.closest('.sz-redo-btn'))     { redoSlot(id); return; }
+  if (e.target.classList.contains('spk-btn')) {
+    const slot = getSlot(id);
+    if (!slot) return;
+    slot.speakers = parseInt(e.target.dataset.spk);
+    slotEl.querySelectorAll('.spk-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.spk) === slot.speakers)
+    );
+    return;
+  }
   if (e.target.closest('.sz-swap-btn')) {
     const slot = getSlot(id);
     if (!slot?.transcript) return;
@@ -969,6 +990,7 @@ async function processSlot(id) {
   try {
     const form = new FormData();
     form.append('audio', slot.file);
+    form.append('speakers', String(slot.speakers || 2));
     const res  = await fetch('/api/transcribe', { method: 'POST', body: form });
     const data = await res.json();
 
@@ -1667,6 +1689,8 @@ function renderWordPreview() {
     <div class="wp-doc-footer">Vanessa Slous · sophroslous.fr — 1</div>
   `;
 }
+
+$('crPreview').addEventListener('input', renderWordPreview);
 
 $('pmtText').addEventListener('click', () => {
   $('pmtText').classList.add('active');
